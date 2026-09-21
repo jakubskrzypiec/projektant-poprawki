@@ -214,13 +214,13 @@
 <div class="contact__page contact__page--right reveal">
 <div class="contact__form-head">
 <h3>
-        Zacznijmy od konkretów
+        Dziękujemy za kontakt
        </h3>
 <p class="section-label">
         Nowa inwestycja
        </p>
 </div>
-<form action="https://formsubmit.co/tooniprojektuja@gmail.com" class="contact-form" method="POST">
+<form action="https://formsubmit.co/tooniprojektuja@gmail.com" class="contact-form" id="contact-inquiry" method="POST">
 <input name="_subject" type="hidden" value="Nowe zapytanie - To Oni Projektują"/>
 <input name="_next" type="hidden" value="https://jakubskrzypiec.github.io/projektant/kontakt.html?wyslano=1#formularz"/>
 <input name="_template" type="hidden" value="table"/>
@@ -269,14 +269,7 @@
 <input name="Termin" type="text"/>
 </label>
 </div>
-<fieldset class="consultation-date" id="termin-konsultacji">
-<legend>Preferowany termin konsultacji projektowej</legend>
-<p>Wybierz datę i godzinę. Potwierdzimy dostępność w odpowiedzi na wiadomość.</p>
-<div class="form-row">
-<label><span>Data konsultacji</span><input name="Preferowana data konsultacji" type="date"/></label>
-<label><span>Godzina konsultacji</span><input name="Preferowana godzina konsultacji" type="time"/></label>
-</div>
-</fieldset>
+
 <label>
 <span>
          Informacje o Inwestycji
@@ -308,6 +301,20 @@
 </div>
 </section>
 
+
+<section class="consultation-section section" aria-label="Umów konsultację projektową">
+<div class="shell">
+<fieldset class="consultation-date" id="termin-konsultacji">
+<legend>Preferowany termin konsultacji projektowej</legend>
+<p>Wybierz datę i godzinę. Potwierdzimy dostępność w odpowiedzi na wiadomość.</p>
+<div class="form-row">
+<label><span>Data konsultacji</span><input form="contact-inquiry" name="Preferowana data konsultacji" type="date"/></label>
+<label><span>Godzina konsultacji</span><input form="contact-inquiry" name="Preferowana godzina konsultacji" type="time"/></label>
+</div>
+<a class="line-link consultation-section__link" href="#formularz">Przejdź do formularza <svg aria-hidden="true"><use href="#icon-arrow"></use></svg></a>
+</fieldset>
+</div>
+</section>
     <section class="map-section" id="lokalizacja">
       <div class="shell map-section__head reveal">
         <div>

@@ -8979,3 +8979,72 @@ body.is-modal-open {
   .modal__main { height: min(42vh, 460px) !important; }
   .modal__close { top: calc(4vh + 8px) !important; right: calc(3vw + 8px) !important; }
 }
+
+/* Korekty rozmieszczenia w zeszycie i galerii. */
+@media (min-width: 821px) {
+  .about__grid::after { left: 42%; }
+}
+.home .packages .package-card summary { min-height: 250px !important; }
+.home .packages .package-card > summary { min-height: 250px !important; }
+.home .packages .package-card summary b { display: none; }
+.packages__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 64px;
+  border: 1px solid var(--line);
+  border-top: 0;
+  background: var(--paper);
+  color: var(--navy);
+  font: 18px var(--display);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.packages__toggle span { font-size: 28px; line-height: 1; transition: transform .25s ease; }
+.packages__toggle[aria-expanded="true"] span { transform: rotate(180deg); }
+.packages__toggle:hover, .packages__toggle:focus-visible { background: var(--cream); }
+.modal__inner { grid-template-columns: minmax(0, 4fr) minmax(205px, 1fr) !important; }
+.modal__copy { padding: 56px 20px 28px !important; }
+.modal__copy h2 { font-size: clamp(22px, 1.85vw, 34px) !important; overflow-wrap: anywhere !important; }
+.modal__image { cursor: ew-resize; }
+@media (max-width: 900px) {
+  .modal__inner { grid-template-columns: 1fr !important; }
+  .modal__copy { padding: 22px 20px !important; }
+}
+
+/* Kalendarz kontaktu jest osobnym segmentem pod formularzem. */
+.consultation-section {
+  min-height: 0;
+  padding: clamp(56px, 7vw, 96px) 0;
+  background: var(--cream);
+}
+.consultation-section .consultation-date {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: clamp(24px, 4vw, 48px);
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  background: var(--paper);
+}
+.consultation-section .consultation-date legend { padding: 0 12px; font-size: clamp(24px, 3vw, 36px); }
+.consultation-section .consultation-date label > span {
+  margin-bottom: 8px;
+  color: var(--navy);
+  font: 12px var(--display);
+  letter-spacing: .15em;
+  text-transform: uppercase;
+}
+.consultation-section .consultation-date input {
+  width: 100%;
+  padding: 11px 2px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  color: var(--navy-dark);
+  font: inherit;
+}
+.consultation-section .consultation-date input:focus { outline: none; border-color: var(--gold); }
+.consultation-section__link { display: inline-block; margin-top: 24px; }

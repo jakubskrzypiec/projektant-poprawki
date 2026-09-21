@@ -1362,3 +1362,73 @@
 .offer-matrix__pdf-note { color: var(--navy); font-size: 17px; }
 .offer-matrix__panel { scroll-margin-top: calc(var(--header-h) + 22px); }
 .extra-service__body-inner p { text-align: left; hyphens: none; }
+
+/* Wyrównanie nagłówków i wartości w tych samych kolumnach tabeli. */
+.offer-matrix__table { table-layout: fixed; }
+.offer-matrix__table thead th:not(.offer-matrix__corner) { text-align: center; }
+.offer-matrix__pack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.offer-matrix__table tbody td { text-align: center; vertical-align: middle; }
+.offer-matrix__table tbody td .of-yes,
+.offer-matrix__table tbody td .of-no,
+.offer-matrix__table tbody td .of-val { display: inline-block; text-align: center; }
+
+/* Jedna, czytelna strzałka w okręgu, obracana po rozwinięciu. */
+.offer-matrix__more,
+.extra-service__more { display: inline-flex; align-items: center; gap: 10px; }
+.offer-matrix__more i,
+.extra-service__more i {
+  position: relative;
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 0;
+  transform: none;
+}
+.offer-matrix__more i::after,
+.extra-service__more i::after {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform .25s ease;
+}
+.offer-matrix__pack.is-open .offer-matrix__more i,
+.extra-service[open] .extra-service__more i { transform: none; background: var(--navy); color: #fff; }
+.offer-matrix__pack.is-open .offer-matrix__more i::after,
+.extra-service[open] .extra-service__more i::after { transform: translateY(2px) rotate(225deg); }
+
+/* Usługi jako kafle harmonijki, bez pytań pod nazwami. */
+.offer-extra__list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  border-top: 1px solid var(--line);
+  border-left: 1px solid var(--line);
+}
+.offer-extra__list .extra-service {
+  min-width: 0;
+  border: 0;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+}
+.offer-extra__list .extra-service > summary {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  align-content: center;
+  min-height: 136px;
+}
+.offer-extra__list .extra-service__more { grid-column: 1; grid-row: auto; }
+@media (max-width: 700px) {
+  .offer-extra__list { grid-template-columns: 1fr; }
+}
+
+
+.offer-matrix__pack.is-open .offer-matrix__more i::before { content: none; }

@@ -169,6 +169,19 @@ const stepModalImage = direction => {
 };
 modal?.querySelector("[data-image-prev]")?.addEventListener("click", () => stepModalImage(-1));
 modal?.querySelector("[data-image-next]")?.addEventListener("click", () => stepModalImage(1));
+modalImage?.addEventListener("click", event => {
+  const bounds = modalImage.getBoundingClientRect();
+  stepModalImage(event.clientX < bounds.left + bounds.width / 2 ? -1 : 1);
+});
+
+const packagesToggle = document.querySelector("[data-packages-toggle]");
+const packageCards = [...document.querySelectorAll(".packages__grid .package-card")];
+packagesToggle?.addEventListener("click", () => {
+  const open = packagesToggle.getAttribute("aria-expanded") !== "true";
+  packageCards.forEach(card => animateDetails(card, open));
+  packagesToggle.setAttribute("aria-expanded", String(open));
+  packagesToggle.firstChild.textContent = open ? "Zwiń opisy pakietów " : "Rozwiń opisy pakietów ";
+});
 
 /* Galeria na pełnym ekranie ma całkowicie zatrzymać stronę pod spodem.
    Samo overflow:hidden nie wystarcza na iOS, dlatego zapamiętujemy pozycję
