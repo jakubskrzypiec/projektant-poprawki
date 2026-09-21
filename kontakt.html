@@ -105,7 +105,7 @@
 </div>
 <div class="offer-consult__intro">
 <p>Konsultacja jest osobną usługą — nie traktujemy jej jako pakietu projektowego. To dobre rozwiązanie, kiedy chcesz sprawdzić lokal, uporządkować kierunek zmian albo skonsultować konkretne decyzje przed rozpoczęciem pełnego projektu.</p>
-<a class="line-link" href="#formularz">Umów konsultację <svg aria-hidden="true"><use href="#icon-arrow"></use></svg></a>
+<a class="line-link" href="#termin-konsultacji">Umów konsultację <svg aria-hidden="true"><use href="#icon-arrow"></use></svg></a>
 </div>
 </div>
 <div class="offer-consult__journey reveal">
@@ -222,8 +222,9 @@
 </div>
 <form action="https://formsubmit.co/tooniprojektuja@gmail.com" class="contact-form" method="POST">
 <input name="_subject" type="hidden" value="Nowe zapytanie - To Oni Projektują"/>
-<input name="_next" type="hidden" value="https://jakubskrzypiec.github.io/tooniprojektujaa/kontakt.html?wyslano=1#formularz"/>
+<input name="_next" type="hidden" value="https://jakubskrzypiec.github.io/projektant/kontakt.html?wyslano=1#formularz"/>
 <input name="_template" type="hidden" value="table"/>
+<input name="_autoresponse" type="hidden" value="Dziękujemy za kontakt z To Oni Projektują. Otrzymaliśmy Twoją wiadomość i odezwiemy się w sprawie projektu."/>
 <input name="_captcha" type="hidden" value="false"/>
 <input autocomplete="off" class="honey" name="_honey" tabindex="-1" type="text"/>
 <div class="form-row">
@@ -245,7 +246,7 @@
 <span>
           E-mail
          </span>
-<input autocomplete="email" name="_replyto" required="" type="email"/>
+<input autocomplete="email" name="email" required="" type="email"/>
 </label>
 <label>
 <span>
@@ -268,6 +269,14 @@
 <input name="Termin" type="text"/>
 </label>
 </div>
+<fieldset class="consultation-date" id="termin-konsultacji">
+<legend>Preferowany termin konsultacji projektowej</legend>
+<p>Wybierz datę i godzinę. Potwierdzimy dostępność w odpowiedzi na wiadomość.</p>
+<div class="form-row">
+<label><span>Data konsultacji</span><input name="Preferowana data konsultacji" type="date"/></label>
+<label><span>Godzina konsultacji</span><input name="Preferowana godzina konsultacji" type="time"/></label>
+</div>
+</fieldset>
 <label>
 <span>
          Informacje o Inwestycji
@@ -280,7 +289,7 @@
 <i>
 </i>
 <span>
-          Zgadzam się na kontakt w sprawie projektu.
+          Zgadzam się na kontakt<br/>w sprawie projektu.
          </span>
 </label>
 <button class="drop-button" type="submit">
@@ -407,6 +416,8 @@
       <div class="modal__gallery">
         <div class="modal__main">
           <img class="modal__image" data-modal-image src="" alt=""/>
+<button class="modal__image-nav modal__image-nav--prev" data-image-prev type="button" aria-label="Poprzednie zdjęcie">‹</button>
+<button class="modal__image-nav modal__image-nav--next" data-image-next type="button" aria-label="Następne zdjęcie">›</button>
         </div>
         <div class="modal__thumbs" data-modal-thumbs></div>
       </div>

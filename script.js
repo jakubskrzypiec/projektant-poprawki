@@ -147,6 +147,7 @@ const modalTitle = modal?.querySelector("[data-modal-title]");
 const modalCategory = modal?.querySelector("[data-modal-category]");
 const modalThumbs = modal?.querySelector("[data-modal-thumbs]");
 const modalDescription = modal?.querySelector("[data-modal-description]");
+let modalImages = [];
 let lastFocus = null;
 let modalGalleryAlts = new Map();
 
@@ -160,6 +161,14 @@ const selectModalImage = source => {
     button.setAttribute("aria-pressed", String(active));
   });
 };
+
+const stepModalImage = direction => {
+  if (!modalImages.length || !modalImage) return;
+  const index = modalImages.indexOf(modalImage.getAttribute("src"));
+  selectModalImage(modalImages[(index + direction + modalImages.length) % modalImages.length]);
+};
+modal?.querySelector("[data-image-prev]")?.addEventListener("click", () => stepModalImage(-1));
+modal?.querySelector("[data-image-next]")?.addEventListener("click", () => stepModalImage(1));
 
 /* Galeria na pełnym ekranie ma całkowicie zatrzymać stronę pod spodem.
    Samo overflow:hidden nie wystarcza na iOS, dlatego zapamiętujemy pozycję
@@ -201,6 +210,7 @@ const openModal = card => {
     .split(",")
     .map(source => source.trim())
     .filter(Boolean);
+  modalImages = gallery;
   const galleryAltLabels = (card.dataset.galleryAlts || "")
     .split("|")
     .map(label => label.trim());
@@ -251,6 +261,7 @@ const closeModal = () => {
   }
   modalThumbs?.replaceChildren();
   modalGalleryAlts = new Map();
+  modalImages = [];
   lastFocus?.focus?.({ preventScroll: true });
 };
 document.addEventListener("click", event => {
@@ -263,6 +274,8 @@ modal?.addEventListener("click", event => {
 });
 document.addEventListener("keydown", event => {
   if (event.key === "Escape" && modal?.classList.contains("is-open")) closeModal();
+  if (modal?.classList.contains("is-open") && event.key === "ArrowLeft") stepModalImage(-1);
+  if (modal?.classList.contains("is-open") && event.key === "ArrowRight") stepModalImage(1);
 });
 
 /* Infinite, slow project carousel */
@@ -691,7 +704,28 @@ if (embeddedMap && embeddedMapFrame) {
 
 /* Success message */
 const params = new URLSearchParams(location.search);
-if (params.get("wyslano") === "1") document.querySelector("[data-success]")?.classList.add("is-visible");
+if (params.get("wyslano") === "1") {
+  document.querySelector("[data-success]")?.classList.add("is-visible");
+  document.querySelectorAll(".contact__form-head").forEach(head => {
+    head.classList.add("is-sent");
+    head.querySelector("h3").textContent = "Dziękujemy za kontakt";
+    head.querySelector(".section-label").textContent = "Zapraszamy do obejrzenia naszych projektów, a my przygotujemy odpowiedź.";
+  });
+  document.querySelector(".contact-form")?.setAttribute("hidden", "");
+  const success = document.querySelector("[data-success]");
+  if (success) {
+    success.removeAttribute("hidden");
+    success.closest(".contact__page--right")?.append(success);
+  }
+}
+
+document.querySelector("[data-pdf-preview]")?.addEventListener("click", event => {
+  const button = event.currentTarget;
+  const note = document.querySelector("[data-pdf-note]");
+  if (!note) return;
+  note.hidden = !note.hidden;
+  button.setAttribute("aria-expanded", String(!note.hidden));
+});
 
 window.addEventListener("beforeunload", () => cancelAnimationFrame(sliderRaf));
 
@@ -732,7 +766,6 @@ if (packToggles.length && packPanels.length) {
 
   packToggles.forEach(toggle => {
     toggle.addEventListener("click", () => {
-      trzymajWMiejscu(toggle);
       const id = toggle.dataset.packToggle;
       const willOpen = toggle.getAttribute("aria-expanded") !== "true";
 
@@ -747,6 +780,15 @@ if (packToggles.length && packPanels.length) {
         const wasOpen = panel.classList.contains("is-open");
         if (open !== wasOpen) setPanel(panel, open);
       });
+
+      if (willOpen) {
+        const panel = panelFor(id);
+        window.setTimeout(() => {
+          if (toggle.getAttribute("aria-expanded") === "true") {
+            panel?.scrollIntoView({ behavior: reduceMotion ? "instant" : "smooth", block: "start" });
+          }
+        }, 80);
+      }
 
     });
   });

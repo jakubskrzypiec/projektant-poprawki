@@ -1322,3 +1322,43 @@
 .extra-service__more i {
   border-radius: 999px 999px 4px 999px;
 }
+
+/* Poprawki klienta: równa skala pisma, wyraźniejsze wartości i Q&A. */
+.offer-matrix__table tbody th[scope="row"],
+.offer-matrix__panel-inner p,
+.offer-matrix__note,
+.offer-matrix__help p,
+.extra-service__body-inner p,
+.offer-consult__intro p {
+  font-size: 17px !important;
+  line-height: 1.62 !important;
+  color: var(--navy-dark) !important;
+}
+.offer-matrix__group th {
+  font-family: var(--display) !important;
+  font-size: 16px !important;
+  font-weight: 400 !important;
+}
+.offer-matrix__table .of-yes { font-size: 27px; }
+.offer-matrix__table .of-val { font-size: 29px; }
+.offer-matrix__pack.is-open .offer-matrix__more i {
+  border-radius: 50% !important;
+  transform: none;
+}
+.offer-matrix__pack.is-open .offer-matrix__more i::before { content: "↑"; }
+.offer-matrix__pack.is-open .offer-matrix__more i { font-size: 0; }
+.offer-matrix__pack.is-open .offer-matrix__more i::before { font-size: 15px; }
+.offer-matrix__note, .offer-matrix__help p { max-width: 720px; }
+.offer-matrix__pdf {
+  margin-top: 30px;
+  padding: 18px 24px;
+  border: 1px solid var(--navy);
+  border-radius: 28px 28px 4px 28px;
+  background: var(--paper);
+  color: var(--navy);
+  font: 18px var(--display);
+  cursor: pointer;
+}
+.offer-matrix__pdf-note { color: var(--navy); font-size: 17px; }
+.offer-matrix__panel { scroll-margin-top: calc(var(--header-h) + 22px); }
+.extra-service__body-inner p { text-align: left; hyphens: none; }

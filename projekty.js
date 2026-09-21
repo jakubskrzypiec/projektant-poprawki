@@ -250,33 +250,6 @@ const projects = [
       "korytarz z podłogą w jodełkę"
     ]
   },
-  {
-    "title": "Mieszkanie beżowe",
-    "category": "PROJEKT WNĘTRZA",
-    "description": "Spokojne, beżowe mieszkanie zostało utrzymane w miękkiej, niemal monochromatycznej palecie. Jasne zabudowy, naturalne drewno i ciepłe światło porządkują niewielką przestrzeń, a czarne linie oświetlenia dodają jej nowoczesnego rytmu. Funkcjonalne rozwiązania w kuchni, gabinecie i łazience pozostają dyskretne i spójne z minimalistycznym charakterem całości.",
-    "folder": "10_Mieszkanie-bezowe",
-    "cover": "10_Mieszkanie-bezowe_00_GLOWNE.jpg",
-    "images": [
-      "10_Mieszkanie-bezowe_00_GLOWNE.jpg",
-      "10_Mieszkanie-bezowe_01.jpg",
-      "10_Mieszkanie-bezowe_02.jpg",
-      "10_Mieszkanie-bezowe_03.jpg",
-      "10_Mieszkanie-bezowe_04.jpg",
-      "10_Mieszkanie-bezowe_05.jpg",
-      "10_Mieszkanie-bezowe_06.jpg",
-      "10_Mieszkanie-bezowe_07.jpg"
-    ],
-    "alts": [
-      "salon z otwartą kuchnią",
-      "beżowy salon przy oknie",
-      "sypialnia w ciepłych beżach",
-      "kompaktowa jasna kuchnia",
-      "jadalnia w beżowej wnęce",
-      "gabinet z miejscem do pracy",
-      "jasny korytarz",
-      "łazienka z pralnią"
-    ]
-  }
 ];
 
 const projectsGrid = document.querySelector("[data-projects-grid]");
