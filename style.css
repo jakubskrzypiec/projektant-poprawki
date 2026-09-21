@@ -9106,3 +9106,28 @@ body.is-modal-open {
 .consultation-section__calendar .calendly-inline-widget { min-width: 320px; height: 720px; }
 .consultation-section__pending { padding: 28px; border: 1px solid var(--line); border-radius: 28px 28px 4px 28px; background: var(--paper); }
 .consultation-section__pending p { margin: 0 0 20px; }
+
+/* W czasie rozwijania nagłówek karty zachowuje tę samą wysokość. */
+.packages__grid { scroll-margin-top: calc(var(--header-h) + 20px); }
+@media (min-width: 901px) {
+  .home .packages .package-card[open] > summary { min-height: 250px !important; }
+  .home .packages .package-card[open] { grid-template-rows: 250px minmax(0, 1fr) !important; }
+}
+.packages__toggle:disabled { opacity: 1; cursor: wait; }
+.packages__toggle-icon { transform: none !important; }
+.packages__toggle-icon::after { content: none !important; }
+.packages__toggle-icon svg {
+  display: block;
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform .25s ease;
+}
+.packages__toggle[aria-expanded="true"] .packages__toggle-icon svg { transform: rotate(180deg); }
+
+/* Pole wiadomości ma własne linie; nie dokładaj obramowania pod ostatnią. */
+.contact-form textarea { border-bottom: 0 !important; }

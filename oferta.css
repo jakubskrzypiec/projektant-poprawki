@@ -1430,6 +1430,10 @@
   .offer-extra__list { grid-template-columns: 1fr; }
 }
 
+/* Otwarta usługa nie rozciąga sąsiedniego, nadal zamkniętego kafla. */
+.offer-extra__list { align-items: start; }
+.offer-extra__list .extra-service { align-self: start; }
+
 
 .offer-matrix__pack.is-open .offer-matrix__more i::before { content: none; }
 

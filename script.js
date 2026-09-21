@@ -177,35 +177,51 @@ modalImage?.addEventListener("click", event => {
 const packagesToggle = document.querySelector("[data-packages-toggle]");
 const packageCards = [...document.querySelectorAll(".packages__grid .package-card")];
 const packagesGrid = document.querySelector(".packages__grid");
-let packagesAnimation;
-packagesToggle?.addEventListener("click", () => {
+packagesToggle?.addEventListener("click", async () => {
+  if (packagesToggle.disabled) return;
   const open = packagesToggle.getAttribute("aria-expanded") !== "true";
-  const from = packagesGrid.getBoundingClientRect().height;
-  if (packagesAnimation) {
-    packagesAnimation.cancel();
-    packagesAnimation = null;
+  packagesToggle.disabled = true;
+
+  /* Najpierw wróć na początek pakietów: przy zwijaniu przycisk znajduje się
+     pod długimi opisami, więc samo zmniejszenie wysokości przesuwa widok w dół. */
+  if (!open) {
+    packagesGrid.scrollIntoView({ behavior: reduceMotion ? "instant" : "smooth", block: "start" });
+    if (!reduceMotion) await new Promise(resolve => window.setTimeout(resolve, 520));
   }
+
+  const from = packagesGrid.getBoundingClientRect().height;
   packagesGrid.style.height = "auto";
-  packagesGrid.style.overflow = "visible";
   packageCards.forEach(card => { card.open = open; });
   const to = packagesGrid.scrollHeight;
+  /* Przy zamykaniu zachowaj zawartość do końca animacji; dopiero wtedy
+     zamknij <details>. W przeciwnym razie tekst znika w jednej klatce. */
+  if (!open) packageCards.forEach(card => { card.open = true; });
   packagesGrid.style.height = `${from}px`;
   packagesGrid.style.overflow = "hidden";
-  if (!reduceMotion && packagesGrid.animate) {
-    packagesAnimation = packagesGrid.animate(
-      [{ height: `${from}px` }, { height: `${to}px` }],
-      { duration: 420, easing: "cubic-bezier(.22,.7,.23,1)" }
-    );
-    const animation = packagesAnimation;
-    animation.onfinish = () => {
-      if (packagesAnimation !== animation) return;
-      packagesGrid.style.height = "";
-      packagesGrid.style.overflow = "";
-      packagesAnimation = null;
-    };
-  } else {
+
+  const finish = () => {
+    packageCards.forEach(card => { card.open = open; });
     packagesGrid.style.height = "";
     packagesGrid.style.overflow = "";
+    packagesToggle.disabled = false;
+    if (!open && Math.abs(packagesGrid.getBoundingClientRect().top - 100) > 90) {
+      packagesGrid.scrollIntoView({ behavior: reduceMotion ? "instant" : "smooth", block: "start" });
+    }
+  };
+
+  if (!reduceMotion && packagesGrid.animate) {
+    const animation = packagesGrid.animate(
+      [{ height: `${from}px` }, { height: `${to}px` }],
+      { duration: 780, easing: "cubic-bezier(.25,.1,.25,1)" }
+    );
+    packageCards.forEach(card => card.querySelector(".package-card__body")?.animate(
+      open ? [{ opacity: 0, transform: "translateY(12px)" }, { opacity: 1, transform: "translateY(0)" }]
+           : [{ opacity: 1 }, { opacity: 0 }],
+      { duration: open ? 550 : 420, delay: open ? 140 : 0, fill: "none", easing: "ease-out" }
+    ));
+    animation.onfinish = finish;
+  } else {
+    finish();
   }
   packagesToggle.setAttribute("aria-expanded", String(open));
   packagesToggle.querySelector("[data-packages-toggle-label]").textContent = open ? "Zwiń opisy pakietów" : "Rozwiń opisy pakietów";
