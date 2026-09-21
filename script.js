@@ -716,6 +716,10 @@ if (embeddedMap && embeddedMapFrame) {
 }
 
 /* Success message */
+document.querySelectorAll(".contact-form input[name='_next']").forEach(input => {
+  const section = document.querySelector("#formularz") ? "formularz" : "kontakt";
+  input.value = `${location.origin}${location.pathname}?wyslano=1#${section}`;
+});
 const params = new URLSearchParams(location.search);
 if (params.get("wyslano") === "1") {
   document.querySelector("[data-success]")?.classList.add("is-visible");
