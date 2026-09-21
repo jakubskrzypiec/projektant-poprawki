@@ -1487,3 +1487,6 @@
 @media (max-width: 700px) {
   .offer-extra__list { grid-template-columns: 1fr; }
 }
+
+/* Sam tytuł w kaflu; kliknięcie całej powierzchni rozwija opis. */
+.offer-extra__list .extra-service > summary { grid-template-columns: minmax(0, 1fr); }
