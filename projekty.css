@@ -20,7 +20,7 @@
 }
 
 .projects-page-section {
-  padding: clamp(44px, 4.5vw, 70px) 0 clamp(86px, 7vw, 118px);
+  padding: calc(var(--header-h) + clamp(44px, 4.5vw, 70px)) 0 clamp(86px, 7vw, 118px);
 }
 
 .projects-page-list {
@@ -268,7 +268,7 @@
   }
 
   .projects-page-section {
-    padding-top: 34px;
+    padding-top: calc(var(--header-h) + 34px);
   }
 
   .projects-page-list {
