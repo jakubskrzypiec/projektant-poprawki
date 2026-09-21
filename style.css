@@ -9048,3 +9048,61 @@ body.is-modal-open {
 }
 .consultation-section .consultation-date input:focus { outline: none; border-color: var(--gold); }
 .consultation-section__link { display: inline-block; margin-top: 24px; }
+
+/* Wspólne rozwinięcie kart bez skoku układu; strzałka w stabilnym okręgu. */
+.packages__toggle { gap: 12px; }
+.packages__toggle [data-packages-toggle-label] { font-size: inherit; line-height: inherit; transform: none !important; }
+.packages__toggle-icon {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  border: 1px solid rgba(40,61,104,.4);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  transition: background .25s ease, color .25s ease;
+}
+.packages__toggle-icon::after {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform .25s ease;
+}
+.packages__toggle[aria-expanded="true"] .packages__toggle-icon { background: var(--navy); color: #fff; }
+.packages__toggle[aria-expanded="true"] .packages__toggle-icon::after { transform: translateY(2px) rotate(225deg); }
+.home .packages .package-card > summary { cursor: pointer; }
+
+/* Galeria: zdjęcie zajmuje poprzednią proporcję; białe strzałki jak w karuzeli. */
+.modal__inner { grid-template-columns: minmax(0, 2.25fr) minmax(245px, .75fr) !important; }
+.modal__copy { padding: 56px 26px 32px !important; }
+.modal__copy h2 { font-size: clamp(26px, 2.15vw, 40px) !important; overflow-wrap: normal !important; }
+.modal__image-nav {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(40,61,104,.25);
+  border-radius: 50% 50% 4px 50%;
+  background: #fff;
+  color: var(--navy);
+  box-shadow: 0 8px 24px rgba(20,35,60,.15);
+  font-size: 0;
+  transition: background .2s ease, transform .2s ease;
+}
+.modal__image-nav:hover { background: var(--cream); transform: translateY(-50%) scale(1.06); }
+.modal__image-nav svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.5; }
+.modal__image-nav--prev svg { transform: rotate(180deg); }
+@media (max-width: 900px) {
+  .modal__inner { grid-template-columns: 1fr !important; }
+  .modal__copy { padding: 22px 20px !important; }
+}
+
+/* Miejsce na terminarz Calendly w osobnym segmencie kontaktu. */
+.consultation-section__calendar { max-width: 860px; margin: 0 auto; }
+.consultation-section__calendar h2 { margin: 0 0 20px; font: clamp(28px, 3vw, 42px) var(--display); color: var(--navy); }
+.consultation-section__calendar .calendly-inline-widget { min-width: 320px; height: 720px; }
+.consultation-section__pending { padding: 28px; border: 1px solid var(--line); border-radius: 28px 28px 4px 28px; background: var(--paper); }
+.consultation-section__pending p { margin: 0 0 20px; }

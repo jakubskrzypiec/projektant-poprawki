@@ -176,12 +176,62 @@ modalImage?.addEventListener("click", event => {
 
 const packagesToggle = document.querySelector("[data-packages-toggle]");
 const packageCards = [...document.querySelectorAll(".packages__grid .package-card")];
+const packagesGrid = document.querySelector(".packages__grid");
+let packagesAnimation;
 packagesToggle?.addEventListener("click", () => {
   const open = packagesToggle.getAttribute("aria-expanded") !== "true";
-  packageCards.forEach(card => animateDetails(card, open));
+  const from = packagesGrid.getBoundingClientRect().height;
+  if (packagesAnimation) {
+    packagesAnimation.cancel();
+    packagesAnimation = null;
+  }
+  packagesGrid.style.height = "auto";
+  packagesGrid.style.overflow = "visible";
+  packageCards.forEach(card => { card.open = open; });
+  const to = packagesGrid.scrollHeight;
+  packagesGrid.style.height = `${from}px`;
+  packagesGrid.style.overflow = "hidden";
+  if (!reduceMotion && packagesGrid.animate) {
+    packagesAnimation = packagesGrid.animate(
+      [{ height: `${from}px` }, { height: `${to}px` }],
+      { duration: 420, easing: "cubic-bezier(.22,.7,.23,1)" }
+    );
+    const animation = packagesAnimation;
+    animation.onfinish = () => {
+      if (packagesAnimation !== animation) return;
+      packagesGrid.style.height = "";
+      packagesGrid.style.overflow = "";
+      packagesAnimation = null;
+    };
+  } else {
+    packagesGrid.style.height = "";
+    packagesGrid.style.overflow = "";
+  }
   packagesToggle.setAttribute("aria-expanded", String(open));
-  packagesToggle.firstChild.textContent = open ? "Zwiń opisy pakietów " : "Rozwiń opisy pakietów ";
+  packagesToggle.querySelector("[data-packages-toggle-label]").textContent = open ? "Zwiń opisy pakietów" : "Rozwiń opisy pakietów";
 });
+
+/* Kalendarz jest aktywowany dopiero po ustawieniu rzeczywistego adresu wydarzenia. */
+const consultationCalendar = document.querySelector("[data-calendly-url]");
+if (consultationCalendar) {
+  const url = consultationCalendar.dataset.calendlyUrl.trim();
+  const widget = consultationCalendar.querySelector("[data-calendly-widget]");
+  const pending = consultationCalendar.querySelector("[data-calendly-pending]");
+  let valid = false;
+  try { valid = new URL(url).hostname === "calendly.com"; } catch (_) { /* Brak linku wydarzenia. */ }
+  if (valid && widget) {
+    const script = document.createElement("script");
+    script.src = "https://assets.calendly.com/assets/external/widget.js";
+    script.async = true;
+    script.onload = () => {
+      if (!window.Calendly?.initInlineWidget) return;
+      widget.hidden = false;
+      window.Calendly.initInlineWidget({ url, parentElement: widget });
+      if (pending) pending.hidden = true;
+    };
+    document.head.append(script);
+  }
+}
 
 /* Galeria na pełnym ekranie ma całkowicie zatrzymać stronę pod spodem.
    Samo overflow:hidden nie wystarcza na iOS, dlatego zapamiętujemy pozycję
@@ -581,8 +631,14 @@ faqItems.forEach(item => {
   });
 });
 
-/* Packages + dodatkowe usługi — ten sam silnik, każdy kafel niezależnie */
-document.querySelectorAll(".package-card, .extra-service").forEach(item => {
+/* Karty pakietów mają jeden wspólny przycisk. Dodatkowe usługi otwierają się osobno. */
+document.querySelectorAll(".package-card").forEach(item => {
+  item.querySelector(":scope > summary")?.addEventListener("click", event => {
+    event.preventDefault();
+    packagesToggle?.click();
+  });
+});
+document.querySelectorAll(".extra-service").forEach(item => {
   const summary = item.querySelector(":scope > summary");
   if (!summary) return;
 
@@ -752,18 +808,23 @@ const packToggles = [...document.querySelectorAll("[data-pack-toggle]")];
 const packPanels = [...document.querySelectorAll("[data-pack-panel]")];
 
 if (packToggles.length && packPanels.length) {
-  const panelFor = id => packPanels.find(panel => panel.dataset.packPanel === id);
+  const panelAnimations = new WeakMap();
 
   const setPanel = (panel, open) => {
     const inner = panel.querySelector(".offer-matrix__panel-inner");
     if (!inner) return;
+    const previous = panelAnimations.get(panel);
+    if (previous) {
+      previous.onfinish = null;
+      previous.cancel();
+    }
+    const from = panel.getBoundingClientRect().height;
     panel.setAttribute("aria-hidden", String(!open));
     panel.classList.toggle("is-open", open);
     if (reduceMotion) {
       panel.style.height = open ? "auto" : "0px";
       return;
     }
-    const from = panel.getBoundingClientRect().height;
     const to = open ? inner.getBoundingClientRect().height : 0;
     panel.style.height = `${from}px`;
     panel.getBoundingClientRect();
@@ -771,8 +832,11 @@ if (packToggles.length && packPanels.length) {
       [{ height: `${from}px` }, { height: `${to}px` }],
       { duration: open ? 360 : 290, easing: "cubic-bezier(.2,.75,.25,1)" }
     );
+    panelAnimations.set(panel, animation);
     animation.onfinish = () => {
+      if (panelAnimations.get(panel) !== animation) return;
       panel.style.height = open ? "auto" : "0px";
+      panelAnimations.delete(panel);
     };
   };
 
@@ -797,15 +861,6 @@ if (packToggles.length && packPanels.length) {
         const wasOpen = panel.classList.contains("is-open");
         if (open !== wasOpen) setPanel(panel, open);
       });
-
-      if (willOpen) {
-        const panel = panelFor(id);
-        window.setTimeout(() => {
-          if (toggle.getAttribute("aria-expanded") === "true") {
-            panel?.scrollIntoView({ behavior: reduceMotion ? "instant" : "smooth", block: "start" });
-          }
-        }, 80);
-      }
 
     });
   });
