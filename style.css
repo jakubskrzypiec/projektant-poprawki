@@ -8266,8 +8266,19 @@ body.subpage .contact__form-head p {
 
 /* ===== ZAZNACZANIE TEKSTU — TO ONI PROJEKTUJĄ ===== */
 
-/* Kolor zaznaczenia pozostawiamy przeglądarce/systemowi,
-   tak jak w starszej wersji strony. */
+/* Zaznaczenie tekstu w drugim kolorze marki:
+   granat zamiast poprzedniego złota. */
+::selection {
+  background: #283D68;
+  color: #F5F2ED;
+  text-shadow: none;
+}
+
+::-moz-selection {
+  background: #283D68;
+  color: #F5F2ED;
+  text-shadow: none;
+}
 
 /* Elementy nagłówkowe, dekoracyjne i interaktywne nie tworzą „ścian zaznaczenia” */
 h1,
