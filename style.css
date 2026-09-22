@@ -8266,18 +8266,8 @@ body.subpage .contact__form-head p {
 
 /* ===== ZAZNACZANIE TEKSTU — TO ONI PROJEKTUJĄ ===== */
 
-/* Tekst użytkowy: zaznaczenie w kolorze marki */
-::selection {
-  background: #CAA030;
-  color: #17284F;
-  text-shadow: none;
-}
-
-::-moz-selection {
-  background: #CAA030;
-  color: #17284F;
-  text-shadow: none;
-}
+/* Kolor zaznaczenia pozostawiamy przeglądarce/systemowi,
+   tak jak w starszej wersji strony. */
 
 /* Elementy nagłówkowe, dekoracyjne i interaktywne nie tworzą „ścian zaznaczenia” */
 h1,
