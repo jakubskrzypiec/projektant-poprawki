@@ -878,6 +878,17 @@ if (packToggles.length && packPanels.length) {
         if (open !== wasOpen) setPanel(panel, open);
       });
 
+      /* Po rozwinięciu opisu wróć do niego, nawet jeśli użytkownik
+         kliknął nagłówek pakietu będąc niżej w tabeli porównawczej. */
+      if (willOpen) {
+        const panel = packPanels.find(item => item.dataset.packPanel === id);
+        window.setTimeout(() => {
+          panel?.scrollIntoView({
+            behavior: reduceMotion ? "auto" : "smooth",
+            block: "start"
+          });
+        }, 120);
+      }
     });
   });
 }
