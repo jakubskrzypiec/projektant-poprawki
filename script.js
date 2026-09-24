@@ -1032,3 +1032,44 @@ if (kopiaONas) {
     przeliczenieKolumn = window.setTimeout(wyrownajKolumnyONas, 150);
   });
 }
+
+/* PAKIETY — "Otrzymujesz" na jednej linii we wszystkich kaflach
+   (uwaga klienta nr 3, 22.09: "Wyrownaj rowniez linie Otrzymujesz:
+   zeby lecialy od jednego poziomu").
+
+   Opisy pakietow maja rozna dlugosc, wiec naglowek pod nimi startowal
+   w kazdym kaflu na innej wysokosci. Wszystkie cztery kafle otwieraja
+   sie jednym przyciskiem, wiec wystarczy zrownac wysokosc samych opisow
+   do najwyzszego. Liczone z tresci, nie na sztywno. */
+const siatkaPakietow = document.querySelector(".packages__grid");
+
+if (siatkaPakietow) {
+  const opisyPakietow = () => [...siatkaPakietow.querySelectorAll(".package-card__body > p")];
+
+  const wyrownajOpisyPakietow = () => {
+    const opisy = opisyPakietow();
+    if (!opisy.length) return;
+
+    opisy.forEach(opis => { opis.style.minHeight = ""; });
+
+    /* Kafle zamkniete nie maja wymiarow — nie ma czego wyrownywac. */
+    const wysokosci = opisy.map(opis => opis.getBoundingClientRect().height);
+    if (!wysokosci.some(Boolean)) return;
+
+    const najwyzszy = Math.max(...wysokosci);
+    opisy.forEach(opis => { opis.style.minHeight = `${najwyzszy}px`; });
+  };
+
+  /* Kafle otwiera wspolny przycisk, a zamyka animacja — lapiemy obie
+     zmiany zamiast wpinac sie w srodek tamtej logiki. */
+  new MutationObserver(() => window.requestAnimationFrame(wyrownajOpisyPakietow))
+    .observe(siatkaPakietow, { attributes: true, subtree: true, attributeFilter: ["open"] });
+
+  let przeliczenieOpisow = 0;
+  window.addEventListener("resize", () => {
+    window.clearTimeout(przeliczenieOpisow);
+    przeliczenieOpisow = window.setTimeout(wyrownajOpisyPakietow, 150);
+  });
+
+  document.fonts?.ready.then(wyrownajOpisyPakietow);
+}
