@@ -289,7 +289,14 @@ packagesToggle?.addEventListener("click", async () => {
   packagesGrid.style.height = `${from}px`;
   packagesGrid.style.overflow = "hidden";
 
+  /* Ten sam bezpiecznik co w harmonijkach: bez niego zgubione onfinish
+     zostawia przycisk na stale w stanie disabled i pakietow nie da sie
+     juz ani zwinac, ani rozwinac. */
+  let bezpiecznikPakietow = 0;
+
   const finish = () => {
+    window.clearTimeout(bezpiecznikPakietow);
+    if (!packagesToggle.disabled) return;
     packageCards.forEach(card => { card.open = open; });
     packagesGrid.style.height = "";
     packagesGrid.style.overflow = "";
@@ -310,6 +317,7 @@ packagesToggle?.addEventListener("click", async () => {
       { duration: open ? 550 : 420, delay: open ? 140 : 0, fill: "none", easing: "ease-out" }
     ));
     animation.onfinish = finish;
+    bezpiecznikPakietow = window.setTimeout(finish, 780 + 200);
   } else {
     finish();
   }
@@ -653,7 +661,19 @@ const animateDetails = (item, willOpen) => {
 
   detailsAnimations.set(item, animation);
 
+  /* Bezpiecznik.
+
+     Caly stan harmonijki wisial na zdarzeniu onfinish: to ono zdejmuje
+     data-animating i domyka <details>. Jesli zdarzenie przepadnie —
+     a przepada, gdy przegladarka przestanie rysowac klatki, np. przy
+     przelaczeniu karty w trakcie animacji — atrybut zostaje na zawsze,
+     getNextDetailsState zwraca ciagle te sama wartosc i kafel przestaje
+     reagowac na klikniecia. Odtworzone w praktyce. Jesli animacja nie
+     zamknie sie w swoim czasie, domykamy stan recznie. */
+  let bezpiecznik = 0;
+
   const finish = () => {
+    window.clearTimeout(bezpiecznik);
     if (detailsAnimations.get(item) !== animation) return;
     if (!detailsTargetOpen.get(item)) item.open = false;
     item.style.height = "";
@@ -662,8 +682,11 @@ const animateDetails = (item, willOpen) => {
     detailsAnimations.delete(item);
   };
 
+  bezpiecznik = window.setTimeout(finish, (willOpen ? 250 : 210) + 150);
+
   animation.onfinish = finish;
   animation.oncancel = () => {
+    window.clearTimeout(bezpiecznik);
     if (detailsAnimations.get(item) !== animation) return;
     item.style.height = "";
     item.style.overflow = "";
@@ -787,7 +810,9 @@ setProcessProgress(0);
 processItems.forEach((item, index) => {
   const button = item.querySelector("[data-process-toggle]");
   button?.addEventListener("click", () => {
-    trzymajWMiejscu(button);
+    /* Kafle procesu animuje CSS (grid-template-rows, 550 ms), a nie Web
+       Animations jak w FAQ. Domyslne 320 ms konczylo sie w polowie ruchu. */
+    trzymajWMiejscu(button, 600);
     const willOpen = !item.classList.contains("is-open");
     processItems.forEach(other => {
       const open = willOpen && other === item;
@@ -915,11 +940,19 @@ if (packToggles.length && packPanels.length) {
       { duration: open ? 360 : 290, easing: "cubic-bezier(.2,.75,.25,1)" }
     );
     panelAnimations.set(panel, animation);
-    animation.onfinish = () => {
+
+    /* Bezpiecznik jak w harmonijkach — bez niego zgubione onfinish
+       zostawia panel z wysokoscia zamrozona w polowie animacji. */
+    let bezpiecznikPanelu = 0;
+    const domknij = () => {
+      window.clearTimeout(bezpiecznikPanelu);
       if (panelAnimations.get(panel) !== animation) return;
       panel.style.height = open ? "auto" : "0px";
       panelAnimations.delete(panel);
     };
+
+    bezpiecznikPanelu = window.setTimeout(domknij, (open ? 360 : 290) + 150);
+    animation.onfinish = domknij;
     return animation;
   };
 

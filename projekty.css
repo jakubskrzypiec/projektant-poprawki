@@ -369,14 +369,9 @@ body.projects-page .page-hero {
 /* 9. Guziki takie same wszedzie. "Pokaz wiecej projektow" mialo wlasny
    styl: 50 px zamiast 54, przezroczyste tlo zamiast granatowego, pelna
    pigulke zamiast ksztaltu kropli, 12 px bold zamiast 15 px i zadnej
-   ikony. Teraz jest to zwykly .drop-button — cala reszta stylu przychodzi
-   ze style.css, tutaj zostaje tylko wysrodkowanie. */
-.projects-page-more-wrap {
-  width: min(1480px, calc(100% - 64px));
-  margin: clamp(48px, 5vw, 72px) auto 0;
-  display: flex;
-  justify-content: center;
-}
+   ikony. Teraz jest to zwykly .drop-button — caly styl przychodzi ze
+   style.css. Ustawienia kontenera (.projects-page-more-wrap) sa juz
+   zdefiniowane wyzej w tym pliku, wiec nie powtarzamy ich tutaj. */
 
 .projects-page-more[hidden] {
   display: none;
