@@ -47,18 +47,55 @@ const bezPlynnego = akcja => {
 /* Jedno trzymanie naraz — nowe klikniecie przerywa poprzednie. */
 let aktywneTrzymanie = null;
 
+/* Wykonaj akcje dopiero, gdy strona dojedzie do zadanej pozycji.
+
+   Potrzebne tam, gdzie przewijanie i zmiana wysokosci musza isc po kolei,
+   a nie razem — inaczej element pod kursorem najpierw jedzie w jedna
+   strone (rosnaca tresc), potem w druga (przewijanie) i widac wahniecie.
+
+   Czekamy na konkretna pozycje, a nie na "brak zmian przez chwile":
+   plynne przewijanie potrafi ruszyc z opoznieniem, wiec test na bezruch
+   odpalilby akcje jeszcze zanim cokolwiek zaczelo sie przesuwac.
+   Limit czasu jest zabezpieczeniem, gdyby strona nie mogla dojechac do
+   celu (np. jestesmy juz przy koncu dokumentu).
+
+   Celowo setInterval, a nie requestAnimationFrame: ma zadzialac takze
+   wtedy, gdy przegladarka nie rysuje klatek. */
+const poDojsciuDoCelu = (cel, akcja, maks = 1000) => {
+  if (cel === null || Math.abs(window.scrollY - cel) < 2) return akcja();
+
+  const koniec = performance.now() + maks;
+  const zegar = window.setInterval(() => {
+    if (Math.abs(window.scrollY - cel) < 2 || performance.now() > koniec) {
+      window.clearInterval(zegar);
+      akcja();
+    }
+  }, 40);
+};
+
 /* Przewin do elementu, zostawiajac miejsce na naglowek.
    Zastepuje scrollIntoView, ktore nie wiedzialo o przyklejonym naglowku
    i ladowalo tresc pod nim. */
 const przewinDoElementu = (element, { odstep = 22, plynnie = false } = {}) => {
-  if (!element) return;
+  if (!element) return null;
   aktywneTrzymanie?.stop();
-  const cel = Math.max(
+
+  const maksymalny = Math.max(
     0,
-    window.scrollY + element.getBoundingClientRect().top - wysokoscNaglowka() - odstep
+    document.documentElement.scrollHeight - window.innerHeight
   );
+  const cel = Math.min(
+    maksymalny,
+    Math.max(
+      0,
+      window.scrollY + element.getBoundingClientRect().top - wysokoscNaglowka() - odstep
+    )
+  );
+
   if (plynnie && !reduceMotion) window.scrollTo({ top: cel, behavior: "smooth" });
   else bezPlynnego(() => window.scrollTo(0, cel));
+
+  return cel; /* pozwala poczekac, az strona faktycznie tam dojedzie */
 };
 
 /* Utrzymaj element w tym samym miejscu ekranu przez czas trwania animacji.
@@ -1070,41 +1107,36 @@ if (packToggles.length && packPanels.length) {
         other.classList.toggle("is-open", open);
       });
 
-      /* Zadnego trzymania pozycji: skoro i tak przewijamy do opisu, kazdy
-         dodatkowy mechanizm ruszajacy scrollem daje drugi ruch. Zmierzone:
-         z trzymaniem strona szla do 297 px i wracala do 227 px — i to
-         wlasnie widac bylo jako podwojny skok. */
-      const animacje = [];
-      packPanels.forEach(panel => {
-        const open = willOpen && panel.dataset.packPanel === id;
-        const wasOpen = panel.classList.contains("is-open");
-        if (open !== wasOpen) {
-          const animacja = setPanel(panel, open);
-          if (animacja) animacje.push(animacja.finished.catch(() => {}));
-        }
-      });
+      const rozwin = () => {
+        packPanels.forEach(panel => {
+          const open = willOpen && panel.dataset.packPanel === id;
+          if (open !== panel.classList.contains("is-open")) setPanel(panel, open);
+        });
+      };
 
-      /* Po rozwinieciu opisu przewin do niego — jeden ruch, od razu.
+      /* Przewijanie i rozwijanie ida PO KOLEI, nie razem.
 
-         Wczesniej strona ruszala sie dwa razy: najpierw natywne kotwiczenie
-         przesuwalo widok, bo rosnacy panel spycha tabele w dol, a potem,
-         juz po animacji, startowalo nasze przewijanie do opisu. Teraz
-         kotwiczenie w tej sekcji jest wylaczone (overflow-anchor w CSS),
-         a przewijanie rusza razem z animacja.
+         Wczesniej oba ruszaly jednoczesnie: rosnacy panel spychal klikniety
+         naglowek w dol, a przewijanie do opisu ciagnelo go w gore. Zmierzony
+         slad pozycji naglowka: +51 px, potem -58 px, dopiero potem -28 px.
+         Naglowek wahal sie o ponad sto pikseli pod kursorem i to widac bylo
+         jako dziwne skakanie sekcji.
 
-         Celem jest kontener paneli, a nie pojedynczy panel: gorna krawedz
-         kontenera nie zmienia polozenia, wiec cel jest znany od razu i nie
-         trzeba czekac na koniec animacji. Przy przelaczaniu miedzy pakietami
-         gorna krawedz samego panelu potrafi sie przesunac, bo sasiad wlasnie
-         sie zwija. */
-      /* Jedno przewiniecie, od razu, do kontenera paneli.
+         Teraz przy otwieraniu najpierw przewijamy do kontenera paneli
+         (gorna krawedz kontenera nie zmienia polozenia, wiec cel jest znany
+         od razu), a opis rozwija sie dopiero, gdy strona sie zatrzyma —
+         ponizej gornej krawedzi ekranu, czyli w widocznym miejscu.
 
-         Celem jest kontener, a nie pojedynczy panel: jego gorna krawedz nie
-         zmienia polozenia, wiec cel jest poprawny juz w chwili klikniecia
-         i nie trzeba czekac na koniec animacji. Panel rozwija sie ponizej
-         punktu docelowego, wiec nie przesuwa go pod trwajacym przewijaniem. */
+         Przy zwijaniu nie przewijamy nigdzie, wiec trzymamy klikniety
+         naglowek w miejscu. Bez tego tabela podskakiwala w gore o wysokosc
+         zwinietego panelu (kotwiczenie w tej sekcji jest wylaczone, zeby
+         nie dokladalo trzeciego ruchu). */
       if (willOpen) {
-        przewinDoElementu(kontenerPaneli || packPanels[0], { plynnie: true });
+        const cel = przewinDoElementu(kontenerPaneli || packPanels[0], { plynnie: true });
+        poDojsciuDoCelu(cel, rozwin);
+      } else {
+        trzymajWMiejscu(toggle, 420);
+        rozwin();
       }
     });
   });
