@@ -1490,3 +1490,66 @@
 
 /* Sam tytuł w kaflu; kliknięcie całej powierzchni rozwija opis. */
 .offer-extra__list .extra-service > summary { grid-template-columns: minmax(0, 1fr); }
+
+/* =========================================================
+   UWAGA KLIENTA NR 11 (22.09)
+   "Justowanie tekstu, wiszace literki, przycisk z PDF ma byc po prawej
+   stronie. Wiekszy odstep tekstu od tabeli."
+   ========================================================= */
+
+/* Wiekszy oddech miedzy tabela a tekstem pod nia. */
+.offer-matrix__table-wrap + .offer-matrix__note,
+.offer-matrix__note.reveal {
+  margin-top: clamp(40px, 4vw, 64px);
+}
+
+/* Justowanie z polskim dzieleniem wyrazow. Ostatnia linia do lewej,
+   zeby nie rozjechala sie na cala szerokosc. */
+.offer-matrix__note,
+.offer-matrix__help p,
+.offer-matrix__pdf-note {
+  text-align: justify;
+  text-align-last: left;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+}
+
+/* Przycisk PDF do prawej krawedzi kolumny. Wczesniej lezal w zwyklym
+   przeplywie, czyli przy lewej krawedzi pod tekstem. */
+.offer-matrix__pdf-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 14px;
+  margin-top: clamp(28px, 3vw, 40px);
+}
+
+.offer-matrix__pdf {
+  margin-top: 0;
+}
+
+.offer-matrix__pdf-note {
+  margin: 0;
+  max-width: 460px;
+  text-align: right;
+  text-align-last: right;
+}
+
+/* Na waskich ekranach justowanie w jednej kolumnie robi biale dziury,
+   a przycisk dosuniety do prawej wyglada na zgubiony. */
+@media (max-width: 720px) {
+  .offer-matrix__note,
+  .offer-matrix__help p,
+  .offer-matrix__pdf-note {
+    text-align: left;
+  }
+
+  .offer-matrix__pdf-wrap {
+    align-items: stretch;
+  }
+
+  .offer-matrix__pdf-note {
+    text-align: left;
+    text-align-last: left;
+  }
+}

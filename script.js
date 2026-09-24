@@ -738,7 +738,16 @@ const typographySelectors = [
   ".contact__lead",
   ".contact__people em",
   ".footer p",
-  ".footer__person em"
+  ".footer__person em",
+  /* Oferta — uwaga klienta nr 11 (22.09): "wiszace literki".
+     Akapity pod tabela i opisy pakietow nie byly tu objete, wiec
+     jednoliterowe spojniki zostawaly na koncu linii. */
+  ".offer-matrix__note",
+  ".offer-matrix__help p",
+  ".offer-matrix__panel-inner p",
+  ".offer-matrix__pdf-note",
+  ".offer-consult__intro p",
+  ".offer-consult__journey-row p"
 ];
 
 const protectPolishTypography = node => {
