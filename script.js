@@ -1131,12 +1131,31 @@ if (packToggles.length && packPanels.length) {
          naglowek w miejscu. Bez tego tabela podskakiwala w gore o wysokosc
          zwinietego panelu (kotwiczenie w tej sekcji jest wylaczone, zeby
          nie dokladalo trzeciego ruchu). */
+      /* Klikniety naglowek zostaje dokladnie tam, gdzie jest — i przy
+         rozwijaniu, i przy zwijaniu.
+
+         Panel rosnie NAD tabela, wiec kazde rozwiniecie spycha cala tabele
+         w dol o jego wysokosc. Wczesniejsze wersje probowaly to obejsc
+         przewijaniem do opisu, ale to dawalo drugi ruch: kafel sie rozwijal
+         i zaraz potem strona "sciagala" zawartosc w dol. Teraz kompensujemy
+         wzrost panelu przewijaniem o dokladnie te sama wartosc, wiec tabela
+         stoi nieruchomo, a opis pojawia sie w miejscu, ktore wlasnie sie
+         otworzylo tuz nad nia. */
+      trzymajWMiejscu(toggle, 480);
+      rozwin();
+
+      /* Wyjatek: jesli klikniety naglowek byl blisko gory ekranu, opis nie
+         zmiesci sie nad nim i wyszedlby poza widok. Tylko w takim wypadku
+         dociagamy go do widoku — w typowej sytuacji nie ma zadnego
+         dodatkowego ruchu. */
       if (willOpen) {
-        const cel = przewinDoElementu(kontenerPaneli || packPanels[0], { plynnie: true });
-        poDojsciuDoCelu(cel, rozwin);
-      } else {
-        trzymajWMiejscu(toggle, 420);
-        rozwin();
+        const panel = packPanels.find(item => item.dataset.packPanel === id);
+        window.setTimeout(() => {
+          if (!panel) return;
+          if (panel.getBoundingClientRect().top < wysokoscNaglowka() + 8) {
+            przewinDoElementu(kontenerPaneli || panel, { plynnie: true });
+          }
+        }, 520);
       }
     });
   });
