@@ -954,3 +954,81 @@ if (packToggles.length && packPanels.length) {
     });
   });
 }
+
+/* O NAS — dwie kolumny tej samej wysokosci (uwaga klienta nr 1, 22.09).
+
+   Przegladarkowe column-fill: balance dzieli tresc tylko na granicy akapitow.
+   Przy tych dlugosciach (110 / 358 / 330 / 193 px) najlepszy mozliwy podzial
+   to 2+2 akapity i 55 px roznicy miedzy kolumnami — dokladnie to, co pracownia
+   zaznaczyla na zrzucie. Dlatego zadajemy wysokosc bloku recznie: kolumny
+   wypelniaja sie do rownej wysokosci, a akapit moze przejsc miedzy nimi.
+   Liczone z aktualnego tekstu, wiec zostanie rowne takze po jego podmianie. */
+const kopiaONas = document.querySelector(".about__copy .rich-copy");
+
+if (kopiaONas) {
+  const wyrownajKolumnyONas = () => {
+    kopiaONas.style.height = "";
+    if (window.innerWidth < 821) return;
+
+    /* Wysokosc calej tresci w jednej kolumnie. */
+    kopiaONas.style.columns = "1";
+    const pelnaWysokosc = kopiaONas.scrollHeight;
+    kopiaONas.style.columns = "";
+
+    if (!pelnaWysokosc) return;
+
+    /* Dolne krawedzie obu kolumn. Akapit moze byc rozbity miedzy kolumny,
+       dlatego bierzemy wszystkie prostokaty fragmentow, a nie same akapity. */
+    const zmierzDolyKolumn = () => {
+      const srodek = kopiaONas.getBoundingClientRect().left
+        + kopiaONas.getBoundingClientRect().width / 2;
+      let lewa = 0;
+      let prawa = 0;
+      kopiaONas.querySelectorAll("p").forEach(akapit => {
+        [...akapit.getClientRects()].forEach(rect => {
+          if (rect.left < srodek) lewa = Math.max(lewa, rect.bottom);
+          else prawa = Math.max(prawa, rect.bottom);
+        });
+      });
+      return { lewa, prawa };
+    };
+
+    /* Start od polowy tresci, potem kilka korekt. Sama polowa nie wystarcza:
+       marginesy miedzy akapitami oraz zasady orphans/widows przesuwaja punkt
+       podzialu, wiec dopasowujemy sie do zmierzonego wyniku. */
+    let wysokosc = pelnaWysokosc / 2;
+    kopiaONas.style.height = `${wysokosc}px`;
+
+    /* Punkt podzialu skacze o cala linie, wiec zera zwykle sie nie da
+       osiagnac. Zapamietujemy najlepszy wynik i do niego wracamy. */
+    let najlepszaWysokosc = wysokosc;
+    let najlepszaRoznica = Infinity;
+
+    for (let proba = 0; proba < 8; proba += 1) {
+      const { lewa, prawa } = zmierzDolyKolumn();
+      if (!lewa || !prawa) break;
+      const roznica = prawa - lewa;
+
+      if (Math.abs(roznica) < najlepszaRoznica) {
+        najlepszaRoznica = Math.abs(roznica);
+        najlepszaWysokosc = wysokosc;
+      }
+      if (najlepszaRoznica <= 2) break;
+
+      wysokosc += roznica / 2;
+      kopiaONas.style.height = `${wysokosc}px`;
+    }
+
+    kopiaONas.style.height = `${najlepszaWysokosc}px`;
+  };
+
+  wyrownajKolumnyONas();
+  document.fonts?.ready.then(wyrownajKolumnyONas);
+  window.addEventListener("load", wyrownajKolumnyONas);
+
+  let przeliczenieKolumn = 0;
+  window.addEventListener("resize", () => {
+    window.clearTimeout(przeliczenieKolumn);
+    przeliczenieKolumn = window.setTimeout(wyrownajKolumnyONas, 150);
+  });
+}

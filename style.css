@@ -9159,3 +9159,71 @@ html[data-scroll-natychmiast] body {
     min-width: 0 !important;
   }
 }
+
+/* =========================================================
+   UWAGI KLIENTA 22.09
+   ========================================================= */
+
+/* 1. O NAS — justowanie, rowne kolumny, bez zaokraglenia narozy.
+   Klient: "Justowanie tekstu. Kolumny maja byc rowne. Mialo nie byc
+   zaokraglenia naroznika." */
+
+/* Duze zaokraglenie 72 px na zewnetrznych narozach kartki znika. */
+.about__visual,
+.about__copy {
+  border-radius: 0 !important;
+}
+
+/* Justowanie z dzieleniem wyrazow — bez dzielenia justowanie robi
+   w waskich kolumnach biale dziury miedzy slowami. */
+.about__copy .rich-copy p {
+  text-align: justify !important;
+  text-align-last: left;
+  hyphens: auto !important;
+  -webkit-hyphens: auto !important;
+  overflow-wrap: break-word !important;
+}
+
+/* Rowne kolumny.
+
+   Wczesniej byl to grid 2x1, a tresc dzielily dwa sztywne <div> po dwa
+   akapity. Akapity maja rozna dlugosc, wiec kolumny konczyly sie na
+   roznej wysokosci i przy kazdej zmianie tekstu trzeba by je przekladac
+   recznie. Teraz uklad liczy przegladarka: <div> przestaja byc pudelkami
+   (display: contents), akapity plyna w dwoch kolumnach, a column-fill:
+   balance wyrownuje ich wysokosc. Zostanie rowne takze po podmianie
+   tekstow przez pracownie. */
+@media (min-width: 821px) {
+  .about__copy .rich-copy {
+    display: block !important;
+    columns: 2 !important;
+    column-gap: clamp(28px, 3vw, 46px) !important;
+    /* Wysokosc bloku ustawia skrypt (wyrownajKolumnyONas). Przy column-fill:
+       auto kolumny wypelniaja sie do zadanej wysokosci, wiec obie koncza sie
+       dokladnie na tej samej linii. column-fill: balance tego nie potrafil:
+       nie dzielil akapitow i zostawial 55 px roznicy. */
+    column-fill: auto !important;
+  }
+
+  .about__copy .rich-copy > div {
+    display: contents;
+  }
+
+  /* Akapit moze przejsc miedzy kolumnami — bez tego podzial jest mozliwy
+     tylko na granicy akapitow i kolumny zostaja nierowne. orphans/widows
+     celowo na 1: przy dwoch kolumnach wymuszanie dwoch wierszy blokowalo
+     przeniesienie ostatniej linii i roznica nie schodzila ponizej 55 px. */
+  .about__copy .rich-copy p {
+    margin: 0 0 16px !important;
+    break-inside: auto;
+    orphans: 1;
+    widows: 1;
+  }
+}
+
+/* Na waskich ekranach justowanie w jednej kolumnie wyglada zle — wracamy do lewej. */
+@media (max-width: 820px) {
+  .about__copy .rich-copy p {
+    text-align: left !important;
+  }
+}
