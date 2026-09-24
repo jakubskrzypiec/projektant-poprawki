@@ -1553,3 +1553,22 @@
     text-align-last: left;
   }
 }
+
+/* Przycisk PDF dostal ikone #icon-arrow zamiast znaku tekstowego ↗
+   (uwaga nr 8). Regula .offer-matrix__pdf ustawia skrocone `font`, ktore
+   nie mowi nic o SVG — bez tego ikona renderowala sie w domyslnym
+   rozmiarze i rozpychala przycisk. */
+.offer-matrix__pdf {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.offer-matrix__pdf svg {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+}
