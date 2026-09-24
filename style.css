@@ -9227,3 +9227,23 @@ html[data-scroll-natychmiast] body {
     text-align: left !important;
   }
 }
+
+/* 14. KONTAKT — kafle konsultacji 01/02/03 to nie sa linki.
+   Klient: "to sa pola nieklikalne takze niech sie nie rusza i bez tych
+   strzalek/kropek". Wiersz mial zlota kropke po prawej, ktora na hover
+   zamieniala sie w krople, i przesuwal sie o 10 px w prawo — czyli
+   zachowywal sie jak element klikalny, ktorym nie jest. */
+.offer-consult__journey-row::after {
+  content: none !important;
+}
+
+.offer-consult__journey-row,
+.offer-consult__journey-row:hover {
+  padding-left: 0 !important;
+  transition: none !important;
+}
+
+/* Kursor tez nie ma sugerowac klikalnosci. */
+.offer-consult__journey-row {
+  cursor: default;
+}
