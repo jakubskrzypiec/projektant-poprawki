@@ -9132,3 +9132,30 @@ body.is-modal-open {
 
 /* Pole wiadomości ma własne linie; nie dokładaj obramowania pod ostatnią. */
 .contact-form textarea { border-bottom: 0 !important; }
+
+/* =========================================================
+   STABILNOSC UKLADU — strona ma nie skakac
+   ========================================================= */
+
+/* Skrypt ustawia ten atrybut tylko na czas wlasnej korekty pozycji.
+   Plynne przewijanie kotwic z menu dziala dalej normalnie. */
+html[data-scroll-natychmiast],
+html[data-scroll-natychmiast] body {
+  scroll-behavior: auto !important;
+}
+
+/* Hero: zlote slowo podmienia sie co 3 s na dluzsze lub krotsze
+   ("dzialaja." / "uspokajaja." / "zostaja." / "pasuja."). Bez
+   zarezerwowanej szerokosci linia potrafila sie przelamac i cala
+   sekcja podskakiwala przy kazdej podmianie. Rezerwujemy miejsce
+   na najdluzszy wariant. */
+.hero h1 .hero__gold {
+  min-width: 6.4em !important;
+  text-align: left;
+}
+
+@media (max-width: 640px) {
+  .hero h1 .hero__gold {
+    min-width: 0 !important;
+  }
+}

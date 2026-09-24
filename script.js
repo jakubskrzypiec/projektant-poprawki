@@ -9,6 +9,96 @@ const updateHeader = () => {
 updateHeader();
 window.addEventListener("scroll", updateHeader, { passive: true });
 
+/* ============================================================
+   PRZEWIJANIE — jedno miejsce dla calej strony.
+
+   Wczesniej pozycja strony byla ruszana przez cztery niezalezne
+   mechanizmy naraz: globalne scroll-behavior: smooth, petle
+   trzymajWMiejscu, scrollIntoView w pakietach i w ofercie oraz
+   przywracanie pozycji po zamknieciu galerii. Kazdy z nich mial
+   wlasny czas trwania, wiec potrafily przesuwac strone jednoczesnie
+   w dwie strony, a kolejne klikniecia dokladaly nowe petle. Stad
+   "losowe przeskoki" i zjezdzanie strony po kilku klknieciach.
+   Teraz wszystko przechodzi przez te trzy funkcje.
+   ============================================================ */
+
+/* Realna wysokosc przyklejonego naglowka — cel przewijania ma sie o nia oprzec. */
+const wysokoscNaglowka = () => header?.getBoundingClientRect().height || 68;
+
+/* Wykonaj skok bez animacji przegladarki.
+
+   Nie ruszamy tu stylu inline documentElement.scrollBehavior, bo poprzednia
+   wersja przy dwoch rownoleglych wywolaniach zapisywala "auto" na stale
+   i plynne przewijanie kotwic gaslo do konca sesji. Licznik + atrybut
+   w HTML jest odporny na zagniezdzenie. */
+let glebokoscBlokadyPlynnosci = 0;
+const bezPlynnego = akcja => {
+  const korzen = document.documentElement;
+  if (glebokoscBlokadyPlynnosci === 0) korzen.dataset.scrollNatychmiast = "1";
+  glebokoscBlokadyPlynnosci += 1;
+  try {
+    akcja();
+  } finally {
+    glebokoscBlokadyPlynnosci -= 1;
+    if (glebokoscBlokadyPlynnosci === 0) delete korzen.dataset.scrollNatychmiast;
+  }
+};
+
+/* Jedno trzymanie naraz — nowe klikniecie przerywa poprzednie. */
+let aktywneTrzymanie = null;
+
+/* Przewin do elementu, zostawiajac miejsce na naglowek.
+   Zastepuje scrollIntoView, ktore nie wiedzialo o przyklejonym naglowku
+   i ladowalo tresc pod nim. */
+const przewinDoElementu = (element, { odstep = 22, plynnie = false } = {}) => {
+  if (!element) return;
+  aktywneTrzymanie?.stop();
+  const cel = Math.max(
+    0,
+    window.scrollY + element.getBoundingClientRect().top - wysokoscNaglowka() - odstep
+  );
+  if (plynnie && !reduceMotion) window.scrollTo({ top: cel, behavior: "smooth" });
+  else bezPlynnego(() => window.scrollTo(0, cel));
+};
+
+/* Utrzymaj element w tym samym miejscu ekranu przez czas trwania animacji.
+   Uzywane tam, gdzie rozwijanie jednego kafla zwija sasiedni i klikniety
+   naglowek ucieklby spod kursora. */
+const trzymajWMiejscu = (element, czas = 320) => {
+  if (!element || reduceMotion) return;
+
+  aktywneTrzymanie?.stop();
+
+  const poczatek = element.getBoundingClientRect().top;
+  const zdarzenia = ["wheel", "touchstart", "keydown"];
+  let przerwane = false;
+  let klatka = 0;
+
+  const przerwij = () => { przerwane = true; };
+  zdarzenia.forEach(z => window.addEventListener(z, przerwij, { passive: true }));
+
+  const uchwyt = {
+    stop() {
+      if (aktywneTrzymanie === uchwyt) aktywneTrzymanie = null;
+      cancelAnimationFrame(klatka);
+      zdarzenia.forEach(z => window.removeEventListener(z, przerwij));
+    }
+  };
+  aktywneTrzymanie = uchwyt;
+
+  const koniec = performance.now() + czas;
+
+  const krok = () => {
+    if (przerwane || aktywneTrzymanie !== uchwyt) return uchwyt.stop();
+    const roznica = element.getBoundingClientRect().top - poczatek;
+    if (Math.abs(roznica) > 0.5) bezPlynnego(() => window.scrollBy(0, roznica));
+    if (performance.now() < koniec) klatka = requestAnimationFrame(krok);
+    else uchwyt.stop();
+  };
+
+  klatka = requestAnimationFrame(krok);
+};
+
 const menuButton = document.querySelector(".menu-toggle");
 const mobileMenu = document.querySelector(".mobile-menu");
 const closeMenu = () => {
@@ -185,7 +275,7 @@ packagesToggle?.addEventListener("click", async () => {
   /* Najpierw wróć na początek pakietów: przy zwijaniu przycisk znajduje się
      pod długimi opisami, więc samo zmniejszenie wysokości przesuwa widok w dół. */
   if (!open) {
-    packagesGrid.scrollIntoView({ behavior: reduceMotion ? "instant" : "smooth", block: "start" });
+    przewinDoElementu(packagesGrid, { plynnie: true });
     if (!reduceMotion) await new Promise(resolve => window.setTimeout(resolve, 520));
   }
 
@@ -204,8 +294,8 @@ packagesToggle?.addEventListener("click", async () => {
     packagesGrid.style.height = "";
     packagesGrid.style.overflow = "";
     packagesToggle.disabled = false;
-    if (!open && Math.abs(packagesGrid.getBoundingClientRect().top - 100) > 90) {
-      packagesGrid.scrollIntoView({ behavior: reduceMotion ? "instant" : "smooth", block: "start" });
+    if (!open && Math.abs(packagesGrid.getBoundingClientRect().top - wysokoscNaglowka() - 22) > 90) {
+      przewinDoElementu(packagesGrid);
     }
   };
 
@@ -269,7 +359,10 @@ const unlockPageScroll = () => {
   body.classList.remove("is-modal-open");
   body.style.top = "";
   body.style.paddingRight = "";
-  window.scrollTo(0, lockedScrollY);
+  /* Bez tego globalne scroll-behavior: smooth zamienialo powrot na animacje,
+     ktora lapala sie z przywracaniem pozycji body — stad losowe przeskoki
+     po zamknieciu galerii. */
+  bezPlynnego(() => window.scrollTo(0, lockedScrollY));
 };
 
 /* Nad paskiem miniatur kółko myszy przewija sam pasek, nie stronę. */
@@ -327,7 +420,7 @@ const openModal = card => {
   modal.classList.add("is-open");
   modal.setAttribute("aria-hidden", "false");
   lockPageScroll();
-  modal.querySelector(".modal__close")?.focus();
+  modal.querySelector(".modal__close")?.focus({ preventScroll: true });
 };
 const closeModal = () => {
   if (!modal) return;
@@ -495,42 +588,6 @@ if ("ResizeObserver" in window && track) {
   });
   carouselResizeObserver.observe(track);
 }
-
-/* Kotwica przewijania dla harmonijek.
-   Przy rozwijaniu jednego elementu sasiedni sie zwija, wiec wszystko pod nim
-   jedzie w gore i klikniety naglowek ucieka spod kursora (zmierzone do 344 px).
-   Natywne kotwiczenie przegladarki nie lapie zmian wysokosci animowanych przez
-   Web Animations, dlatego trzymamy pozycje sami przez czas trwania animacji.
-   Nie zmienia to wygladu ani samych animacji - tylko punkt widzenia. */
-const trzymajWMiejscu = (element, czas = 520) => {
-  if (!element) return;
-  const korzen = document.documentElement;
-  const poczatek = element.getBoundingClientRect().top;
-  const plynne = getComputedStyle(korzen).scrollBehavior;
-  let recznePrzewijanie = false;
-
-  const przerwij = () => { recznePrzewijanie = true; };
-  ["wheel", "touchstart", "keydown"].forEach(z =>
-    window.addEventListener(z, przerwij, { passive: true, once: true }));
-
-  korzen.style.scrollBehavior = "auto";
-  const koniec = performance.now() + czas;
-
-  const krok = () => {
-    if (recznePrzewijanie) return sprzatnij();
-    const roznica = element.getBoundingClientRect().top - poczatek;
-    if (Math.abs(roznica) > 0.5) window.scrollTo(0, window.scrollY + roznica);
-    if (performance.now() < koniec) requestAnimationFrame(krok);
-    else sprzatnij();
-  };
-
-  const sprzatnij = () => {
-    korzen.style.scrollBehavior = plynne === "smooth" ? "" : plynne;
-    ["wheel", "touchstart", "keydown"].forEach(z => window.removeEventListener(z, przerwij));
-  };
-
-  requestAnimationFrame(krok);
-};
 
 /* Stable DETAILS animation — FAQ + packages */
 const detailsAnimations = new WeakMap();
@@ -839,7 +896,7 @@ if (packToggles.length && packPanels.length) {
     panel.classList.toggle("is-open", open);
     if (reduceMotion) {
       panel.style.height = open ? "auto" : "0px";
-      return;
+      return null;
     }
     const to = open ? inner.getBoundingClientRect().height : 0;
     panel.style.height = `${from}px`;
@@ -854,6 +911,7 @@ if (packToggles.length && packPanels.length) {
       panel.style.height = open ? "auto" : "0px";
       panelAnimations.delete(panel);
     };
+    return animation;
   };
 
   packPanels.forEach(panel => {
@@ -872,22 +930,26 @@ if (packToggles.length && packPanels.length) {
         other.classList.toggle("is-open", open);
       });
 
+      const animacje = [];
       packPanels.forEach(panel => {
         const open = willOpen && panel.dataset.packPanel === id;
         const wasOpen = panel.classList.contains("is-open");
-        if (open !== wasOpen) setPanel(panel, open);
+        if (open !== wasOpen) {
+          const animacja = setPanel(panel, open);
+          if (animacja) animacje.push(animacja.finished.catch(() => {}));
+        }
       });
 
-      /* Po rozwinięciu opisu wróć do niego, nawet jeśli użytkownik
-         kliknął nagłówek pakietu będąc niżej w tabeli porównawczej. */
+      /* Po rozwinieciu opisu wroc do niego, nawet jesli uzytkownik kliknal
+         naglowek pakietu bedac nizej w tabeli.
+
+         Przewijamy dopiero PO zakonczeniu animacji paneli. Wczesniej szlo to
+         przez setTimeout(120) w jej trakcie: jeden panel sie zwijal, drugi
+         rozwijal, wysokosc zmieniala sie pod trwajacym przewijaniem i cel
+         ladowal w losowym miejscu. */
       if (willOpen) {
         const panel = packPanels.find(item => item.dataset.packPanel === id);
-        window.setTimeout(() => {
-          panel?.scrollIntoView({
-            behavior: reduceMotion ? "auto" : "smooth",
-            block: "start"
-          });
-        }, 120);
+        Promise.all(animacje).then(() => przewinDoElementu(panel, { plynnie: true }));
       }
     });
   });
