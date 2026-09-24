@@ -9104,7 +9104,7 @@ body.is-modal-open {
 /* Miejsce na terminarz Calendly w osobnym segmencie kontaktu. */
 .consultation-section__calendar { max-width: 860px; margin: 0 auto; }
 .consultation-section__calendar h2 { margin: 0 0 20px; font: clamp(28px, 3vw, 42px) var(--display); color: var(--navy); }
-.consultation-section__calendar .calendly-inline-widget { min-width: 320px; height: 720px; }
+.consultation-section__calendar .consultation-section__widget { min-width: 320px; height: 720px; }
 .consultation-section__pending { padding: 28px; border: 1px solid var(--line); border-radius: 28px 28px 4px 28px; background: var(--paper); }
 .consultation-section__pending p { margin: 0 0 20px; }
 

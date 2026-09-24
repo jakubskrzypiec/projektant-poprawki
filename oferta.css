@@ -1585,3 +1585,22 @@
 .offer-matrix__panel {
   overflow-anchor: none;
 }
+
+/* Uwaga pracowni 24.09: przycisk "Skontaktuj sie z nami" ma stac przy
+   prawej krawedzi, w jednej linii pionowej z "Zobacz przykladowy PDF".
+   Wczesniej lezal zaraz za akapitem, wiec dwa przyciski jeden pod drugim
+   byly przesuniete wzgledem siebie. */
+@media (min-width: 721px) {
+  .offer-matrix__help {
+    align-items: flex-end;
+  }
+
+  .offer-matrix__help p {
+    flex: 1 1 100%;
+    max-width: 720px;
+  }
+
+  .offer-matrix__help > .drop-button {
+    margin-left: auto;
+  }
+}

@@ -304,6 +304,15 @@ packagesToggle?.addEventListener("click", () => {
     packagesGrid.style.height = "";
     packagesGrid.style.overflow = "";
     packagesToggle.disabled = false;
+
+    /* Po rozwinieciu gora kafli potrafi zostac schowana pod naglowkiem —
+       opisy sa dlugie, wiec siatka rosnie w obie strony wzgledem widoku.
+       Podciagamy strone tak, zeby poczatek pakietow byl widoczny. Robimy
+       to tylko przy rozwijaniu i tylko wtedy, gdy gora faktycznie jest
+       ucieta, wiec nie ma zbednego ruchu. */
+    if (open && packagesGrid.getBoundingClientRect().top < wysokoscNaglowka() + 12) {
+      przewinDoElementu(packagesGrid, { plynnie: true });
+    }
   };
 
   if (!reduceMotion && packagesGrid.animate) {
@@ -339,6 +348,13 @@ if (consultationCalendar) {
   let valid = false;
   try { valid = new URL(url).hostname === "calendly.com"; } catch (_) { /* Brak linku wydarzenia. */ }
   if (valid && widget) {
+    /* Kontener celowo NIE ma klasy "calendly-inline-widget".
+
+       Skrypt Calendly po zaladowaniu sam skanuje strone w poszukiwaniu
+       elementow z ta klasa i czyta z nich atrybut data-url. My podajemy
+       adres programowo przez initInlineWidget, wiec atrybutu tam nie ma
+       i ich kod wywracal sie na "Cannot read properties of null (reading
+       'split')". Blad byl widoczny w konsoli na podstronie Kontakt. */
     const script = document.createElement("script");
     script.src = "https://assets.calendly.com/assets/external/widget.js";
     script.async = true;
@@ -799,6 +815,27 @@ const protectPolishTypography = node => {
 
 document.querySelectorAll(typographySelectors.join(",")).forEach(protectPolishTypography);
 
+/* Miekkie laczniki w tekscie justowanym.
+
+   Przegladarka nie ma polskiego slownika dzielenia (sprawdzone: hyphens:
+   auto nie zmienia lamania ani o piksel), wiec justowanie w waskich
+   kolumnach robilo "rzeki" — biale przerwy miedzy slowami. dzielenie-pl.js
+   dokleja niewidoczne laczniki na podstawie wzorcow TeX-owych i sam
+   sprawdza, ktore akapity sa naprawde justowane. Musi isc po powyzszej
+   typografii, zeby nie rozbijac wstawionych twardych spacji. */
+window.dzielenieWyrazowPL?.([
+  ".about__copy .rich-copy p",
+  ".offer-matrix__note",
+  ".offer-matrix__help p",
+  ".offer-matrix__pdf-note",
+  ".offer-matrix__panel-inner p",
+  ".offer-consult__intro p",
+  ".offer-consult__journey-row p",
+  ".package-card__body p",
+  ".faq__list details > div p",
+  ".contact__lead"
+].join(","));
+
 /* Process accordion + progress */
 const processItems = [...document.querySelectorAll("[data-process-item]")];
 const processGhost = document.querySelector("[data-process-ghost]");
@@ -978,6 +1015,10 @@ if (packToggles.length && packPanels.length) {
         other.classList.toggle("is-open", open);
       });
 
+      /* Zadnego trzymania pozycji: skoro i tak przewijamy do opisu, kazdy
+         dodatkowy mechanizm ruszajacy scrollem daje drugi ruch. Zmierzone:
+         z trzymaniem strona szla do 297 px i wracala do 227 px — i to
+         wlasnie widac bylo jako podwojny skok. */
       const animacje = [];
       packPanels.forEach(panel => {
         const open = willOpen && panel.dataset.packPanel === id;
@@ -1001,6 +1042,12 @@ if (packToggles.length && packPanels.length) {
          trzeba czekac na koniec animacji. Przy przelaczaniu miedzy pakietami
          gorna krawedz samego panelu potrafi sie przesunac, bo sasiad wlasnie
          sie zwija. */
+      /* Jedno przewiniecie, od razu, do kontenera paneli.
+
+         Celem jest kontener, a nie pojedynczy panel: jego gorna krawedz nie
+         zmienia polozenia, wiec cel jest poprawny juz w chwili klikniecia
+         i nie trzeba czekac na koniec animacji. Panel rozwija sie ponizej
+         punktu docelowego, wiec nie przesuwa go pod trwajacym przewijaniem. */
       if (willOpen) {
         przewinDoElementu(kontenerPaneli || packPanels[0], { plynnie: true });
       }
