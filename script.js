@@ -1068,11 +1068,41 @@ if (kopiaONas) {
   document.fonts?.ready.then(wyrownajKolumnyONas);
   window.addEventListener("load", wyrownajKolumnyONas);
 
+  /* Obserwujemy rodzica, a nie zdarzenie resize okna.
+
+     Zadana wysokosc jest policzona dla konkretnej szerokosci kolumn, wiec
+     po jej zmianie trzeba liczyc od nowa — inaczej przy jednej kolumnie
+     tekst zostalby przyciety. window.resize nie lapi wszystkich przypadkow
+     (zmiana zoomu, pojawienie sie paska przewijania, pasek adresu na
+     telefonie). ResizeObserver lapie kazda zmiane szerokosci.
+
+     Obserwujemy .about__copy, a nie sam blok tekstu, bo to jemu
+     ustawiamy wysokosc — obserwowanie go wprost robiloby petle. */
+  const ramaONas = kopiaONas.closest(".about__copy");
   let przeliczenieKolumn = 0;
-  window.addEventListener("resize", () => {
+  const zaplanujKolumny = () => {
     window.clearTimeout(przeliczenieKolumn);
     przeliczenieKolumn = window.setTimeout(wyrownajKolumnyONas, 150);
-  });
+  };
+
+  /* Celowo oba mechanizmy naraz — lapia rozne przypadki i zadnego nie
+     mozna zastapic drugim:
+     - ResizeObserver widzi kazda zmiane szerokosci kontenera, takze bez
+       zmiany rozmiaru okna, ale potrzebuje klatki renderowania;
+     - zdarzenie resize dziala nawet wtedy, gdy przegladarka nie rysuje.
+     Przeliczenie jest odroczone i idempotentne, wiec podwojne wywolanie
+     niczego nie psuje. */
+  if (ramaONas && "ResizeObserver" in window) {
+    let ostatniaSzerokosc = 0;
+    new ResizeObserver(wpisy => {
+      const szerokosc = Math.round(wpisy[0].contentRect.width);
+      if (szerokosc === ostatniaSzerokosc) return;
+      ostatniaSzerokosc = szerokosc;
+      zaplanujKolumny();
+    }).observe(ramaONas);
+  }
+
+  window.addEventListener("resize", zaplanujKolumny);
 }
 
 /* PAKIETY — "Otrzymujesz" na jednej linii we wszystkich kaflach
@@ -1107,11 +1137,27 @@ if (siatkaPakietow) {
   new MutationObserver(() => window.requestAnimationFrame(wyrownajOpisyPakietow))
     .observe(siatkaPakietow, { attributes: true, subtree: true, attributeFilter: ["open"] });
 
+  /* Tak samo jak przy kolumnach "o nas": obserwujemy szerokosc rodzica,
+     a nie zdarzenie resize okna. Ustawiamy min-height na kafle wewnatrz
+     siatki, wiec obserwowanie samej siatki robiloby petle. */
+  const ramaPakietow = siatkaPakietow.parentElement;
   let przeliczenieOpisow = 0;
-  window.addEventListener("resize", () => {
+  const zaplanujPrzeliczenie = () => {
     window.clearTimeout(przeliczenieOpisow);
     przeliczenieOpisow = window.setTimeout(wyrownajOpisyPakietow, 150);
-  });
+  };
+
+  if (ramaPakietow && "ResizeObserver" in window) {
+    let ostatniaSzerokosc = 0;
+    new ResizeObserver(wpisy => {
+      const szerokosc = Math.round(wpisy[0].contentRect.width);
+      if (szerokosc === ostatniaSzerokosc) return;
+      ostatniaSzerokosc = szerokosc;
+      zaplanujPrzeliczenie();
+    }).observe(ramaPakietow);
+  }
+
+  window.addEventListener("resize", zaplanujPrzeliczenie);
 
   document.fonts?.ready.then(wyrownajOpisyPakietow);
 }
