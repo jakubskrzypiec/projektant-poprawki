@@ -184,29 +184,11 @@
   justify-content: center;
 }
 
-.projects-page-more {
-  min-height: 50px;
-  padding: 12px 24px;
-  border: 1px solid rgba(40, 61, 104, .35);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--navy);
-  font-family: var(--body);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: .13em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: background .25s ease, color .25s ease, transform .25s ease, border-color .25s ease;
-}
-
-.projects-page-more:hover,
-.projects-page-more:focus-visible {
-  border-color: var(--navy);
-  background: var(--navy);
-  color: #fff;
-  transform: scale(1.03);
-}
+/* Uwaga klienta nr 9 (22.09): "guziki mialy byc wszystkie takie same".
+   "Pokaz wiecej projektow" mial tu wlasny styl (50 px zamiast 54,
+   przezroczyste tlo zamiast granatowego, pelna pigulka zamiast ksztaltu
+   kropli, 12 px bold zamiast 15 px, brak ikony). Caly ten blok zostal
+   usuniety - przycisk jest teraz zwyklym .drop-button ze style.css. */
 
 .projects-page-more[hidden] {
   display: none;
@@ -364,4 +346,38 @@ body.projects-page .page-hero {
   letter-spacing: normal;
   line-height: 1.1;
   text-transform: none;
+}
+
+/* =========================================================
+   UWAGI KLIENTA 22.09
+   ========================================================= */
+
+/* 8. Strzalki takie same wszedzie. Kafel mial znak tekstowy →,
+   teraz nosi te sama ikone co przyciski i linki na calej stronie. */
+.projects-page-card__hint {
+  gap: 8px;
+}
+
+.projects-page-card__hint svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+}
+
+/* 9. Guziki takie same wszedzie. "Pokaz wiecej projektow" mialo wlasny
+   styl: 50 px zamiast 54, przezroczyste tlo zamiast granatowego, pelna
+   pigulke zamiast ksztaltu kropli, 12 px bold zamiast 15 px i zadnej
+   ikony. Teraz jest to zwykly .drop-button — cala reszta stylu przychodzi
+   ze style.css, tutaj zostaje tylko wysrodkowanie. */
+.projects-page-more-wrap {
+  width: min(1480px, calc(100% - 64px));
+  margin: clamp(48px, 5vw, 72px) auto 0;
+  display: flex;
+  justify-content: center;
+}
+
+.projects-page-more[hidden] {
+  display: none;
 }
