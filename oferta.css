@@ -1604,3 +1604,40 @@
     margin-left: auto;
   }
 }
+
+/* Uwaga pracowni 24.09: oba przyciski maja miec ten sam rozmiar
+   ("kolor moze zostac, ale rozmiar bo sie kloca").
+
+   Bylo: "Skontaktuj sie z nami" 54 px / Gill Sans MT 15 px wersaliki,
+   "Zobacz przykladowy PDF" 60 px / ISOCPEUR 18 px bez wersalikow, do tego
+   inne odstepy wewnetrzne i inne zaokraglenie. Zrownujemy cala geometrie
+   i typografie do .drop-button; rozne zostaja tylko kolory. */
+.offer-matrix__pdf {
+  min-height: 54px;
+  padding: 14px 22px 14px 28px;
+  gap: 20px;
+  border-radius: 999px 999px 5px 999px;
+  font-family: var(--body);
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  transition: transform .25s ease, background .25s ease, color .25s ease;
+}
+
+/* Ten sam gest przy najechaniu co w pozostalych przyciskach. */
+.offer-matrix__pdf:hover,
+.offer-matrix__pdf:focus-visible {
+  transform: translateY(-3px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .offer-matrix__pdf {
+    transition: none;
+  }
+  .offer-matrix__pdf:hover,
+  .offer-matrix__pdf:focus-visible {
+    transform: none;
+  }
+}
