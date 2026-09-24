@@ -1641,3 +1641,28 @@
     transform: none;
   }
 }
+
+/* Subtelne pojawianie sie tresci opisu pakietu.
+
+   Sama wysokosc panelu animuje skrypt (jedna petla steruje i wysokoscia,
+   i pozycja strony). Tutaj dokladamy tylko delikatne wejscie samego
+   tekstu, zeby rozwijanie nie bylo golym rozsuwaniem ramki. Krotsze niz
+   animacja wysokosci, bez przesuniec w bok. */
+.offer-matrix__panel-inner {
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity .34s ease, transform .34s ease;
+}
+
+.offer-matrix__panel.is-open .offer-matrix__panel-inner {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .offer-matrix__panel-inner {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}

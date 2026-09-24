@@ -47,32 +47,6 @@ const bezPlynnego = akcja => {
 /* Jedno trzymanie naraz — nowe klikniecie przerywa poprzednie. */
 let aktywneTrzymanie = null;
 
-/* Wykonaj akcje dopiero, gdy strona dojedzie do zadanej pozycji.
-
-   Potrzebne tam, gdzie przewijanie i zmiana wysokosci musza isc po kolei,
-   a nie razem — inaczej element pod kursorem najpierw jedzie w jedna
-   strone (rosnaca tresc), potem w druga (przewijanie) i widac wahniecie.
-
-   Czekamy na konkretna pozycje, a nie na "brak zmian przez chwile":
-   plynne przewijanie potrafi ruszyc z opoznieniem, wiec test na bezruch
-   odpalilby akcje jeszcze zanim cokolwiek zaczelo sie przesuwac.
-   Limit czasu jest zabezpieczeniem, gdyby strona nie mogla dojechac do
-   celu (np. jestesmy juz przy koncu dokumentu).
-
-   Celowo setInterval, a nie requestAnimationFrame: ma zadzialac takze
-   wtedy, gdy przegladarka nie rysuje klatek. */
-const poDojsciuDoCelu = (cel, akcja, maks = 1000) => {
-  if (cel === null || Math.abs(window.scrollY - cel) < 2) return akcja();
-
-  const koniec = performance.now() + maks;
-  const zegar = window.setInterval(() => {
-    if (Math.abs(window.scrollY - cel) < 2 || performance.now() > koniec) {
-      window.clearInterval(zegar);
-      akcja();
-    }
-  }, 40);
-};
-
 /* Przewin do elementu, zostawiajac miejsce na naglowek.
    Zastepuje scrollIntoView, ktore nie wiedzialo o przyklejonym naglowku
    i ladowalo tresc pod nim. */
@@ -1044,122 +1018,178 @@ document.querySelector("[data-pdf-preview]")?.addEventListener("click", event =>
 window.addEventListener("beforeunload", () => cancelAnimationFrame(sliderRaf));
 
 
-/* Oferta — opis pakietu rozwija się NAD tabelą po kliknięciu w nagłówek kolumny. */
+/* =============================================================
+   OFERTA — rozwijanie opisu pakietu
+
+   Zalozenia:
+   - animacja ma byc subtelna,
+   - klikniecie "Rozwin opis" ma cofnac uzytkownika do gory, do opisu,
+     jesli przewinal sie nizej po tabeli.
+
+   Dlaczego jedna petla na wszystko:
+   wczesniejsze wersje sterowaly wysokoscia panelu i pozycja strony
+   osobno (animacja Web Animations + plynne przewijanie przegladarki +
+   natywne kotwiczenie scrolla). Kazdy z tych mechanizmow ma wlasny czas
+   trwania i wlasna krzywa, wiec ciagnely strone w przeciwne strony —
+   stad "podwojne skoki" i "sciaganie w dol". Tutaj jest jedno zrodlo
+   prawdy: w kazdej klatce sami ustawiamy i wysokosc paneli, i pozycje
+   strony, z ta sama krzywa i tym samym czasem. Nic sie z niczym nie bije.
+   ============================================================= */
 const packToggles = [...document.querySelectorAll("[data-pack-toggle]")];
 const packPanels = [...document.querySelectorAll("[data-pack-panel]")];
 
 if (packToggles.length && packPanels.length) {
-  const panelAnimations = new WeakMap();
   const kontenerPaneli = document.querySelector("[data-pack-panels]");
 
-  const setPanel = (panel, open) => {
+  const CZAS_OTWIERANIA = 420;
+  const CZAS_ZAMYKANIA = 340;
+  const ODSTEP_OD_NAGLOWKA = 24;
+
+  /* Lagodne wyhamowanie — bez odbicia, bez przyspieszenia na starcie. */
+  const wygladz = t => 1 - Math.pow(1 - t, 3);
+
+  let biezacaAnimacja = null;
+  let bezpiecznik = 0;
+
+  const wysokoscTresci = panel => {
     const inner = panel.querySelector(".offer-matrix__panel-inner");
-    if (!inner) return;
-    const previous = panelAnimations.get(panel);
-    if (previous) {
-      previous.onfinish = null;
-      previous.cancel();
-    }
-    const from = panel.getBoundingClientRect().height;
-    panel.setAttribute("aria-hidden", String(!open));
-    panel.classList.toggle("is-open", open);
-    if (reduceMotion) {
-      panel.style.height = open ? "auto" : "0px";
-      return null;
-    }
-    const to = open ? inner.getBoundingClientRect().height : 0;
-    panel.style.height = `${from}px`;
-    panel.getBoundingClientRect();
-    const animation = panel.animate(
-      [{ height: `${from}px` }, { height: `${to}px` }],
-      { duration: open ? 360 : 290, easing: "cubic-bezier(.2,.75,.25,1)" }
-    );
-    panelAnimations.set(panel, animation);
-
-    /* Bezpiecznik jak w harmonijkach — bez niego zgubione onfinish
-       zostawia panel z wysokoscia zamrozona w polowie animacji. */
-    let bezpiecznikPanelu = 0;
-    const domknij = () => {
-      window.clearTimeout(bezpiecznikPanelu);
-      if (panelAnimations.get(panel) !== animation) return;
-      panel.style.height = open ? "auto" : "0px";
-      panelAnimations.delete(panel);
-    };
-
-    bezpiecznikPanelu = window.setTimeout(domknij, (open ? 360 : 290) + 150);
-    animation.onfinish = domknij;
-    return animation;
+    return inner ? inner.getBoundingClientRect().height : 0;
   };
 
+  /* Panele startuja zwiniete. */
   packPanels.forEach(panel => {
     panel.style.height = "0px";
+    panel.style.overflow = "hidden";
     panel.setAttribute("aria-hidden", "true");
   });
+
+  const maksymalnyScroll = () => Math.max(
+    0,
+    document.documentElement.scrollHeight - window.innerHeight
+  );
+
+  const animuj = (zmiany, celScrollu) => {
+    /* Nowe klikniecie przejmuje sterowanie po poprzednim, zamiast dokladac
+       druga animacje do tej samej wlasciwosci. */
+    if (biezacaAnimacja) cancelAnimationFrame(biezacaAnimacja);
+    window.clearTimeout(bezpiecznik);
+
+    const startScrollu = window.scrollY;
+    const czas = zmiany.some(z => z.doWysokosci > z.zWysokosci)
+      ? CZAS_OTWIERANIA
+      : CZAS_ZAMYKANIA;
+
+    const domknij = () => {
+      window.clearTimeout(bezpiecznik);
+      if (biezacaAnimacja) cancelAnimationFrame(biezacaAnimacja);
+      biezacaAnimacja = null;
+      zmiany.forEach(({ panel, otwarty }) => {
+        panel.style.height = otwarty ? "auto" : "0px";
+      });
+      if (celScrollu !== null) bezPlynnego(() => window.scrollTo(0, celScrollu));
+    };
+
+    if (reduceMotion) {
+      if (celScrollu !== null) bezPlynnego(() => window.scrollTo(0, celScrollu));
+      domknij();
+      return;
+    }
+
+    const poczatek = performance.now();
+
+    const klatka = teraz => {
+      const postep = Math.min(1, (teraz - poczatek) / czas);
+      const k = wygladz(postep);
+
+      zmiany.forEach(({ panel, zWysokosci, doWysokosci }) => {
+        panel.style.height = `${zWysokosci + (doWysokosci - zWysokosci) * k}px`;
+      });
+
+      if (celScrollu !== null) {
+        bezPlynnego(() => window.scrollTo(0, startScrollu + (celScrollu - startScrollu) * k));
+      }
+
+      if (postep < 1) biezacaAnimacja = requestAnimationFrame(klatka);
+      else domknij();
+    };
+
+    biezacaAnimacja = requestAnimationFrame(klatka);
+
+    /* Bezpiecznik: cala animacja idzie przez petle klatek, a przegladarka
+       przestaje je rysowac np. gdy karta trafi w tlo albo okno zejdzie pod
+       inne. Bez tego panel zostalby w polowie — albo wcale by sie nie
+       otworzyl. setTimeout dziala takze bez rysowania, wiec domyka stan. */
+    bezpiecznik = window.setTimeout(domknij, czas + 200);
+  };
 
   packToggles.forEach(toggle => {
     toggle.addEventListener("click", () => {
       const id = toggle.dataset.packToggle;
-      const willOpen = toggle.getAttribute("aria-expanded") !== "true";
+      const otwieramy = toggle.getAttribute("aria-expanded") !== "true";
 
-      packToggles.forEach(other => {
-        const open = willOpen && other === toggle;
-        other.setAttribute("aria-expanded", String(open));
-        other.classList.toggle("is-open", open);
+      packToggles.forEach(inny => {
+        const stan = otwieramy && inny === toggle;
+        inny.setAttribute("aria-expanded", String(stan));
+        inny.classList.toggle("is-open", stan);
       });
 
-      const rozwin = () => {
-        packPanels.forEach(panel => {
-          const open = willOpen && panel.dataset.packPanel === id;
-          if (open !== panel.classList.contains("is-open")) setPanel(panel, open);
+      /* Wysokosci mierzymy PRZED zmiana stanu, zeby animacja startowala
+         z tego, co widac teraz — takze wtedy, gdy poprzednia animacja
+         zostala przerwana w polowie. */
+      const zmiany = [];
+      packPanels.forEach(panel => {
+        const maBycOtwarty = otwieramy && panel.dataset.packPanel === id;
+        const bylOtwarty = panel.classList.contains("is-open");
+        if (maBycOtwarty === bylOtwarty) return;
+
+        const zWysokosci = panel.getBoundingClientRect().height;
+        panel.classList.toggle("is-open", maBycOtwarty);
+        panel.setAttribute("aria-hidden", String(!maBycOtwarty));
+
+        zmiany.push({
+          panel,
+          otwarty: maBycOtwarty,
+          zWysokosci,
+          doWysokosci: maBycOtwarty ? wysokoscTresci(panel) : 0
         });
-      };
+      });
 
-      /* Przewijanie i rozwijanie ida PO KOLEI, nie razem.
+      if (!zmiany.length) return;
 
-         Wczesniej oba ruszaly jednoczesnie: rosnacy panel spychal klikniety
-         naglowek w dol, a przewijanie do opisu ciagnelo go w gore. Zmierzony
-         slad pozycji naglowka: +51 px, potem -58 px, dopiero potem -28 px.
-         Naglowek wahal sie o ponad sto pikseli pod kursorem i to widac bylo
-         jako dziwne skakanie sekcji.
+      let celScrollu = null;
 
-         Teraz przy otwieraniu najpierw przewijamy do kontenera paneli
-         (gorna krawedz kontenera nie zmienia polozenia, wiec cel jest znany
-         od razu), a opis rozwija sie dopiero, gdy strona sie zatrzyma —
-         ponizej gornej krawedzi ekranu, czyli w widocznym miejscu.
-
-         Przy zwijaniu nie przewijamy nigdzie, wiec trzymamy klikniety
-         naglowek w miejscu. Bez tego tabela podskakiwala w gore o wysokosc
-         zwinietego panelu (kotwiczenie w tej sekcji jest wylaczone, zeby
-         nie dokladalo trzeciego ruchu). */
-      /* Klikniety naglowek zostaje dokladnie tam, gdzie jest — i przy
-         rozwijaniu, i przy zwijaniu.
-
-         Panel rosnie NAD tabela, wiec kazde rozwiniecie spycha cala tabele
-         w dol o jego wysokosc. Wczesniejsze wersje probowaly to obejsc
-         przewijaniem do opisu, ale to dawalo drugi ruch: kafel sie rozwijal
-         i zaraz potem strona "sciagala" zawartosc w dol. Teraz kompensujemy
-         wzrost panelu przewijaniem o dokladnie te sama wartosc, wiec tabela
-         stoi nieruchomo, a opis pojawia sie w miejscu, ktore wlasnie sie
-         otworzylo tuz nad nia. */
-      trzymajWMiejscu(toggle, 480);
-      rozwin();
-
-      /* Wyjatek: jesli klikniety naglowek byl blisko gory ekranu, opis nie
-         zmiesci sie nad nim i wyszedlby poza widok. Tylko w takim wypadku
-         dociagamy go do widoku — w typowej sytuacji nie ma zadnego
-         dodatkowego ruchu. */
-      if (willOpen) {
-        const panel = packPanels.find(item => item.dataset.packPanel === id);
-        window.setTimeout(() => {
-          if (!panel) return;
-          if (panel.getBoundingClientRect().top < wysokoscNaglowka() + 8) {
-            przewinDoElementu(kontenerPaneli || panel, { plynnie: true });
-          }
-        }, 520);
+      if (otwieramy) {
+        /* Cofnij do opisu. Gorna krawedz kontenera paneli nie zmienia
+           polozenia przy rozwijaniu (panel rosnie w dol), wiec cel jest
+           znany od razu i nie trzeba czekac na koniec animacji. */
+        const odniesienie = kontenerPaneli || packPanels[0];
+        celScrollu = Math.min(
+          maksymalnyScroll(),
+          Math.max(
+            0,
+            window.scrollY
+              + odniesienie.getBoundingClientRect().top
+              - wysokoscNaglowka()
+              - ODSTEP_OD_NAGLOWKA
+          )
+        );
+        /* Jesli opis i tak jest juz na swoim miejscu, nie ruszamy strona. */
+        if (Math.abs(celScrollu - window.scrollY) < 4) celScrollu = null;
       }
+      /* Przy zwijaniu celowo nie ruszamy strona.
+
+         Kusi, zeby zejsc o wysokosc znikajacego panelu i "utrzymac" tabele
+         w miejscu, ale po rozwinieciu uzytkownik stoi juz przy opisie,
+         czyli blisko poczatku strony — kompensacja wyrzucilaby go na sam
+         gore dokumentu. Bez niej opis po prostu sklada sie, a tabela
+         plynnie wjezdza na jego miejsce. Tak zachowuje sie kazda
+         harmonijka i tego uzytkownik sie spodziewa. */
+
+      animuj(zmiany, celScrollu);
     });
   });
 }
+
 
 /* O NAS — rowne kolumny robi teraz sam CSS (grid + space-between).
    Wczesniejsza wersja liczyla wysokosc bloku w skrypcie i dzielila akapity
