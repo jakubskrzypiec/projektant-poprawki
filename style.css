@@ -8266,17 +8266,17 @@ body.subpage .contact__form-head p {
 
 /* ===== ZAZNACZANIE TEKSTU — TO ONI PROJEKTUJĄ ===== */
 
-/* Zaznaczenie tekstu w drugim kolorze marki:
-   granat zamiast poprzedniego złota. */
+/* Zaznaczenie tekstu w zlocie marki (--gold) z granatowym tekstem —
+   kolor wskazany przez pracownie na zrzucie z 24.09. */
 ::selection {
-  background: #283D68;
-  color: #F5F2ED;
+  background: #CAA030;
+  color: #17284F;
   text-shadow: none;
 }
 
 ::-moz-selection {
-  background: #283D68;
-  color: #F5F2ED;
+  background: #CAA030;
+  color: #17284F;
   text-shadow: none;
 }
 
@@ -9184,40 +9184,35 @@ html[data-scroll-natychmiast] body {
   overflow-wrap: break-word !important;
 }
 
-/* Rowne kolumny.
+/* Rowne kolumny — dolne krawedzie na jednej linii.
 
-   Wczesniej byl to grid 2x1, a tresc dzielily dwa sztywne <div> po dwa
-   akapity. Akapity maja rozna dlugosc, wiec kolumny konczyly sie na
-   roznej wysokosci i przy kazdej zmianie tekstu trzeba by je przekladac
-   recznie. Teraz uklad liczy przegladarka: <div> przestaja byc pudelkami
-   (display: contents), akapity plyna w dwoch kolumnach, a column-fill:
-   balance wyrownuje ich wysokosc. Zostanie rowne takze po podmianie
-   tekstow przez pracownie. */
+   Probowalem wczesniej ukladu wielokolumnowego z dzieleniem akapitow
+   miedzy kolumny. Dawal rowna wysokosc bloku, ale zostawial na dole
+   lewej kolumny pojedyncza, wiszaca linie nowego akapitu — wygladalo to
+   gorzej niz sam problem. Teraz zostawiamy akapity w calosci: kazdy
+   z dwoch <div> jest osobna kolumna, grid rozciaga obie do wysokosci
+   wyzszej (align-items: stretch), a justify-content: space-between
+   rozklada nadmiar miejsca w odstep miedzy akapitami. Dzieki temu obie
+   kolumny koncza sie dokladnie na tej samej wysokosci, bez dzielenia
+   akapitow i bez sierot. Dziala tak samo po podmianie tekstow. */
 @media (min-width: 821px) {
   .about__copy .rich-copy {
-    display: block !important;
-    columns: 2 !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     column-gap: clamp(28px, 3vw, 46px) !important;
-    /* Wysokosc bloku ustawia skrypt (wyrownajKolumnyONas). Przy column-fill:
-       auto kolumny wypelniaja sie do zadanej wysokosci, wiec obie koncza sie
-       dokladnie na tej samej linii. column-fill: balance tego nie potrafil:
-       nie dzielil akapitow i zostawial 55 px roznicy. */
-    column-fill: auto !important;
+    align-items: stretch !important;
   }
 
   .about__copy .rich-copy > div {
-    display: contents;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    row-gap: 16px;
   }
 
-  /* Akapit moze przejsc miedzy kolumnami — bez tego podzial jest mozliwy
-     tylko na granicy akapitow i kolumny zostaja nierowne. orphans/widows
-     celowo na 1: przy dwoch kolumnach wymuszanie dwoch wierszy blokowalo
-     przeniesienie ostatniej linii i roznica nie schodzila ponizej 55 px. */
   .about__copy .rich-copy p {
-    margin: 0 0 16px !important;
-    break-inside: auto;
-    orphans: 1;
-    widows: 1;
+    margin: 0 !important;
+    break-inside: avoid;
   }
 }
 

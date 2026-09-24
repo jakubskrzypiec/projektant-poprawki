@@ -267,17 +267,20 @@ modalImage?.addEventListener("click", event => {
 const packagesToggle = document.querySelector("[data-packages-toggle]");
 const packageCards = [...document.querySelectorAll(".packages__grid .package-card")];
 const packagesGrid = document.querySelector(".packages__grid");
-packagesToggle?.addEventListener("click", async () => {
+packagesToggle?.addEventListener("click", () => {
   if (packagesToggle.disabled) return;
   const open = packagesToggle.getAttribute("aria-expanded") !== "true";
   packagesToggle.disabled = true;
 
-  /* Najpierw wróć na początek pakietów: przy zwijaniu przycisk znajduje się
-     pod długimi opisami, więc samo zmniejszenie wysokości przesuwa widok w dół. */
-  if (!open) {
-    przewinDoElementu(packagesGrid, { plynnie: true });
-    if (!reduceMotion) await new Promise(resolve => window.setTimeout(resolve, 520));
-  }
+  /* Przycisk zostaje dokladnie tam, gdzie jest.
+
+     Wczesniej przy zwijaniu strona najpierw przewijala sie na poczatek
+     pakietow, czekala 520 ms i dopiero potem zaczynala zwijac (razem
+     1,3 s), a na koniec przewijala sie jeszcze raz. Stad wrazenie
+     opoznienia i podwojnego skoku. Teraz nie przewijamy w ogole —
+     trzymamy klikniety przycisk w tym samym miejscu ekranu, wiec
+     zwijanie i rozwijanie dzieje sie od razu i pod kursorem. */
+  trzymajWMiejscu(packagesToggle, 560);
 
   const from = packagesGrid.getBoundingClientRect().height;
   packagesGrid.style.height = "auto";
@@ -301,23 +304,25 @@ packagesToggle?.addEventListener("click", async () => {
     packagesGrid.style.height = "";
     packagesGrid.style.overflow = "";
     packagesToggle.disabled = false;
-    if (!open && Math.abs(packagesGrid.getBoundingClientRect().top - wysokoscNaglowka() - 22) > 90) {
-      przewinDoElementu(packagesGrid);
-    }
   };
 
   if (!reduceMotion && packagesGrid.animate) {
+    /* 780 ms bylo wyraznie za wolne jak na harmonijke — stad "srednia
+       animacja". Skrocone i zrownane z reszta serwisu (FAQ ma 250/210 ms).
+       Tekst pojawia sie razem z wysokoscia, bez opoznienia 140 ms, ktore
+       dawalo efekt doklejania sie opisow po fakcie. */
+    const czas = open ? 420 : 340;
+
     const animation = packagesGrid.animate(
       [{ height: `${from}px` }, { height: `${to}px` }],
-      { duration: 780, easing: "cubic-bezier(.25,.1,.25,1)" }
+      { duration: czas, easing: "cubic-bezier(.2,.75,.25,1)" }
     );
     packageCards.forEach(card => card.querySelector(".package-card__body")?.animate(
-      open ? [{ opacity: 0, transform: "translateY(12px)" }, { opacity: 1, transform: "translateY(0)" }]
-           : [{ opacity: 1 }, { opacity: 0 }],
-      { duration: open ? 550 : 420, delay: open ? 140 : 0, fill: "none", easing: "ease-out" }
+      open ? [{ opacity: 0 }, { opacity: 1 }] : [{ opacity: 1 }, { opacity: 0 }],
+      { duration: Math.round(czas * 0.8), fill: "none", easing: "ease-out" }
     ));
     animation.onfinish = finish;
-    bezpiecznikPakietow = window.setTimeout(finish, 780 + 200);
+    bezpiecznikPakietow = window.setTimeout(finish, czas + 200);
   } else {
     finish();
   }
@@ -916,6 +921,7 @@ const packPanels = [...document.querySelectorAll("[data-pack-panel]")];
 
 if (packToggles.length && packPanels.length) {
   const panelAnimations = new WeakMap();
+  const kontenerPaneli = document.querySelector("[data-pack-panels]");
 
   const setPanel = (panel, open) => {
     const inner = panel.querySelector(".offer-matrix__panel-inner");
@@ -982,128 +988,30 @@ if (packToggles.length && packPanels.length) {
         }
       });
 
-      /* Po rozwinieciu opisu wroc do niego, nawet jesli uzytkownik kliknal
-         naglowek pakietu bedac nizej w tabeli.
+      /* Po rozwinieciu opisu przewin do niego — jeden ruch, od razu.
 
-         Przewijamy dopiero PO zakonczeniu animacji paneli. Wczesniej szlo to
-         przez setTimeout(120) w jej trakcie: jeden panel sie zwijal, drugi
-         rozwijal, wysokosc zmieniala sie pod trwajacym przewijaniem i cel
-         ladowal w losowym miejscu. */
+         Wczesniej strona ruszala sie dwa razy: najpierw natywne kotwiczenie
+         przesuwalo widok, bo rosnacy panel spycha tabele w dol, a potem,
+         juz po animacji, startowalo nasze przewijanie do opisu. Teraz
+         kotwiczenie w tej sekcji jest wylaczone (overflow-anchor w CSS),
+         a przewijanie rusza razem z animacja.
+
+         Celem jest kontener paneli, a nie pojedynczy panel: gorna krawedz
+         kontenera nie zmienia polozenia, wiec cel jest znany od razu i nie
+         trzeba czekac na koniec animacji. Przy przelaczaniu miedzy pakietami
+         gorna krawedz samego panelu potrafi sie przesunac, bo sasiad wlasnie
+         sie zwija. */
       if (willOpen) {
-        const panel = packPanels.find(item => item.dataset.packPanel === id);
-        Promise.all(animacje).then(() => przewinDoElementu(panel, { plynnie: true }));
+        przewinDoElementu(kontenerPaneli || packPanels[0], { plynnie: true });
       }
     });
   });
 }
 
-/* O NAS — dwie kolumny tej samej wysokosci (uwaga klienta nr 1, 22.09).
-
-   Przegladarkowe column-fill: balance dzieli tresc tylko na granicy akapitow.
-   Przy tych dlugosciach (110 / 358 / 330 / 193 px) najlepszy mozliwy podzial
-   to 2+2 akapity i 55 px roznicy miedzy kolumnami — dokladnie to, co pracownia
-   zaznaczyla na zrzucie. Dlatego zadajemy wysokosc bloku recznie: kolumny
-   wypelniaja sie do rownej wysokosci, a akapit moze przejsc miedzy nimi.
-   Liczone z aktualnego tekstu, wiec zostanie rowne takze po jego podmianie. */
-const kopiaONas = document.querySelector(".about__copy .rich-copy");
-
-if (kopiaONas) {
-  const wyrownajKolumnyONas = () => {
-    kopiaONas.style.height = "";
-    if (window.innerWidth < 821) return;
-
-    /* Wysokosc calej tresci w jednej kolumnie. */
-    kopiaONas.style.columns = "1";
-    const pelnaWysokosc = kopiaONas.scrollHeight;
-    kopiaONas.style.columns = "";
-
-    if (!pelnaWysokosc) return;
-
-    /* Dolne krawedzie obu kolumn. Akapit moze byc rozbity miedzy kolumny,
-       dlatego bierzemy wszystkie prostokaty fragmentow, a nie same akapity. */
-    const zmierzDolyKolumn = () => {
-      const srodek = kopiaONas.getBoundingClientRect().left
-        + kopiaONas.getBoundingClientRect().width / 2;
-      let lewa = 0;
-      let prawa = 0;
-      kopiaONas.querySelectorAll("p").forEach(akapit => {
-        [...akapit.getClientRects()].forEach(rect => {
-          if (rect.left < srodek) lewa = Math.max(lewa, rect.bottom);
-          else prawa = Math.max(prawa, rect.bottom);
-        });
-      });
-      return { lewa, prawa };
-    };
-
-    /* Start od polowy tresci, potem kilka korekt. Sama polowa nie wystarcza:
-       marginesy miedzy akapitami oraz zasady orphans/widows przesuwaja punkt
-       podzialu, wiec dopasowujemy sie do zmierzonego wyniku. */
-    let wysokosc = pelnaWysokosc / 2;
-    kopiaONas.style.height = `${wysokosc}px`;
-
-    /* Punkt podzialu skacze o cala linie, wiec zera zwykle sie nie da
-       osiagnac. Zapamietujemy najlepszy wynik i do niego wracamy. */
-    let najlepszaWysokosc = wysokosc;
-    let najlepszaRoznica = Infinity;
-
-    for (let proba = 0; proba < 8; proba += 1) {
-      const { lewa, prawa } = zmierzDolyKolumn();
-      if (!lewa || !prawa) break;
-      const roznica = prawa - lewa;
-
-      if (Math.abs(roznica) < najlepszaRoznica) {
-        najlepszaRoznica = Math.abs(roznica);
-        najlepszaWysokosc = wysokosc;
-      }
-      if (najlepszaRoznica <= 2) break;
-
-      wysokosc += roznica / 2;
-      kopiaONas.style.height = `${wysokosc}px`;
-    }
-
-    kopiaONas.style.height = `${najlepszaWysokosc}px`;
-  };
-
-  wyrownajKolumnyONas();
-  document.fonts?.ready.then(wyrownajKolumnyONas);
-  window.addEventListener("load", wyrownajKolumnyONas);
-
-  /* Obserwujemy rodzica, a nie zdarzenie resize okna.
-
-     Zadana wysokosc jest policzona dla konkretnej szerokosci kolumn, wiec
-     po jej zmianie trzeba liczyc od nowa — inaczej przy jednej kolumnie
-     tekst zostalby przyciety. window.resize nie lapi wszystkich przypadkow
-     (zmiana zoomu, pojawienie sie paska przewijania, pasek adresu na
-     telefonie). ResizeObserver lapie kazda zmiane szerokosci.
-
-     Obserwujemy .about__copy, a nie sam blok tekstu, bo to jemu
-     ustawiamy wysokosc — obserwowanie go wprost robiloby petle. */
-  const ramaONas = kopiaONas.closest(".about__copy");
-  let przeliczenieKolumn = 0;
-  const zaplanujKolumny = () => {
-    window.clearTimeout(przeliczenieKolumn);
-    przeliczenieKolumn = window.setTimeout(wyrownajKolumnyONas, 150);
-  };
-
-  /* Celowo oba mechanizmy naraz — lapia rozne przypadki i zadnego nie
-     mozna zastapic drugim:
-     - ResizeObserver widzi kazda zmiane szerokosci kontenera, takze bez
-       zmiany rozmiaru okna, ale potrzebuje klatki renderowania;
-     - zdarzenie resize dziala nawet wtedy, gdy przegladarka nie rysuje.
-     Przeliczenie jest odroczone i idempotentne, wiec podwojne wywolanie
-     niczego nie psuje. */
-  if (ramaONas && "ResizeObserver" in window) {
-    let ostatniaSzerokosc = 0;
-    new ResizeObserver(wpisy => {
-      const szerokosc = Math.round(wpisy[0].contentRect.width);
-      if (szerokosc === ostatniaSzerokosc) return;
-      ostatniaSzerokosc = szerokosc;
-      zaplanujKolumny();
-    }).observe(ramaONas);
-  }
-
-  window.addEventListener("resize", zaplanujKolumny);
-}
+/* O NAS — rowne kolumny robi teraz sam CSS (grid + space-between).
+   Wczesniejsza wersja liczyla wysokosc bloku w skrypcie i dzielila akapity
+   miedzy kolumny; dawalo to rowna wysokosc, ale zostawialo na dole lewej
+   kolumny pojedyncza wiszaca linie. Kod zostal usuniety zamiast rozbudowany. */
 
 /* PAKIETY — "Otrzymujesz" na jednej linii we wszystkich kaflach
    (uwaga klienta nr 3, 22.09: "Wyrownaj rowniez linie Otrzymujesz:

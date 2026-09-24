@@ -1572,3 +1572,16 @@
   stroke: currentColor;
   stroke-width: 1.6;
 }
+
+/* Rozwijanie opisu pakietu — jeden ruch zamiast dwoch.
+
+   Rosnacy panel spycha tabele w dol, wiec przegladarka wlaczala natywne
+   kotwiczenie scrolla i sama przesuwala widok. Gdy w tym samym czasie
+   trwalo nasze plynne przewijanie do opisu, strona ruszala sie dwa razy.
+   Wylaczamy kotwiczenie w tej sekcji — zostaje jedno, zamierzone
+   przewijanie. */
+.offer-matrix,
+.offer-matrix__panels,
+.offer-matrix__panel {
+  overflow-anchor: none;
+}
