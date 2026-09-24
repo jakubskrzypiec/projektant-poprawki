@@ -539,12 +539,15 @@ body.subpage #formularz .contact__form-head {
   gap: 8px;
 }
 
-body.subpage #formularz .contact__form-head .section-label {
+/* Uwaga klienta nr 13 (22.09): "Napisz do nas na gorze, nowa inwestycja
+   na dole". Kolejnosc wymuszal tu flexbox (order), wiec sama zamiana
+   miejscami w HTML by nie wystarczyla. */
+body.subpage #formularz .contact__form-head h3 {
   order: 0;
   margin: 0;
 }
 
-body.subpage #formularz .contact__form-head h3 {
+body.subpage #formularz .contact__form-head .section-label {
   order: 1;
   margin: 0;
 }
