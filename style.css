@@ -9242,3 +9242,81 @@ html[data-scroll-natychmiast] body {
 .offer-consult__journey-row {
   cursor: default;
 }
+
+/* Komunikat bledu wysylki formularza (gdy wysylka w tle sie nie powiedzie). */
+.form-error {
+  margin: 16px 0 0;
+  padding: 14px 18px;
+  border: 1px solid rgba(202, 160, 48, .55);
+  border-radius: 18px 18px 4px 18px;
+  background: rgba(202, 160, 48, .1);
+  color: var(--navy-dark);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* =========================================================
+   TERMINARZ KONSULTACJI — oprawa w stylu strony
+   =========================================================
+   Sam kalendarz to iframe z calendly.com, wiec jego wnetrza nie da sie
+   stylowac naszym CSS-em (kolory w srodku wymagaja platnego planu
+   Calendly). Robimy wszystko po naszej stronie: ramka, zaokraglenie,
+   tlo i wysrodkowanie, zeby widget przestal wygladac jak wklejony
+   prostokat.
+   ========================================================= */
+
+.consultation-section__calendar {
+  /* Naglowek byl wyrownany do lewej, a Calendly centruje swoja tresc
+     w srodku ramki — przez to napis i kalendarz wygladaly na przesuniete
+     wzgledem siebie. Teraz oba sa na jednej osi. */
+  text-align: center;
+}
+
+.consultation-section__calendar h2 {
+  text-align: center;
+}
+
+.consultation-section__widget {
+  /* Ramka w tej samej konwencji co kafel "Dodatkowe uslugi" i placeholder
+     terminarza: kremowy papier, linia marki, ksztalt kropli.
+
+     Tlo celowo NIE jest biale. Calendly rysuje wewnatrz wlasna biala karte
+     na przezroczystym tle, wiec biala ramka dawala "pudelko w pudelku".
+     Na kremowym karta Calendly czyta sie jak element strony.
+
+     overflow przycina kwadratowe rogi iframe'a do ksztaltu ramki. */
+  border-radius: 32px 32px 4px 32px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  box-shadow: 0 22px 60px rgba(33, 48, 76, .1);
+}
+
+.consultation-section__widget iframe {
+  display: block;
+  border: 0;
+}
+
+/* Placeholder (gdy terminarz sie nie wczyta) tez na srodku. */
+.consultation-section__pending {
+  text-align: center;
+}
+
+.consultation-section__pending .line-link {
+  justify-content: center;
+}
+
+/* Wysokosc ramki terminarza. Widok "Select a Date & Time" jest wyzszy niz
+   720 px, przez co w srodku pojawial sie wlasny pasek przewijania.
+   Wartosci dobrane do realnej wysokosci widoku Calendly — do potwierdzenia
+   na zywej stronie, bo lokalnie ich zasoby sa blokowane. */
+.consultation-section__calendar .consultation-section__widget {
+  min-width: 320px;
+  height: 1040px;
+}
+
+@media (min-width: 821px) {
+  .consultation-section__calendar .consultation-section__widget {
+    height: 920px;
+  }
+}

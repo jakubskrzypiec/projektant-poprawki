@@ -926,8 +926,8 @@ document.querySelectorAll(".contact-form input[name='_next']").forEach(input => 
   input.value = `${location.origin}${location.pathname}?wyslano=1#${section}`;
 });
 const params = new URLSearchParams(location.search);
-if (params.get("wyslano") === "1") {
-  document.querySelector("[data-success]")?.classList.add("is-visible");
+/* Stan "wyslano" — jeden dla obu drog: wysylki w tle i powrotu z ?wyslano=1. */
+const pokazPodziekowanie = () => {
   document.querySelectorAll(".contact__form-head").forEach(head => {
     head.classList.add("is-sent");
     head.querySelector("h3").textContent = "Dziękujemy za kontakt";
@@ -937,9 +937,64 @@ if (params.get("wyslano") === "1") {
   const success = document.querySelector("[data-success]");
   if (success) {
     success.removeAttribute("hidden");
+    success.classList.add("is-visible");
     success.closest(".contact__page--right")?.append(success);
   }
-}
+};
+
+if (params.get("wyslano") === "1") pokazPodziekowanie();
+
+/* Wysylka bez opuszczania strony.
+
+   Zwykly POST szedl na formsubmit.co, ktory po przetworzeniu przerzucal
+   uzytkownika z powrotem na kontakt.html?wyslano=1 — czyli wyjscie ze
+   strony, mrugniecie i przeladowanie. FormSubmit ma koncowke /ajax/,
+   ktora zwraca JSON zamiast przekierowania, wiec podziekowanie pokazujemy
+   w miejscu formularza.
+
+   Zwykla wysylka zostaje jako zapas: jesli skrypt sie nie wykona albo
+   fetch padnie, formularz dziala po staremu. */
+document.querySelectorAll(".contact-form").forEach(formularz => {
+  const przycisk = formularz.querySelector("[type='submit']");
+
+  const pokazBlad = tresc => {
+    let blad = formularz.querySelector("[data-blad-wysylki]");
+    if (!blad) {
+      blad = document.createElement("p");
+      blad.className = "form-error";
+      blad.setAttribute("data-blad-wysylki", "");
+      blad.setAttribute("role", "alert");
+      formularz.append(blad);
+    }
+    blad.textContent = tresc;
+  };
+
+  formularz.addEventListener("submit", async event => {
+    if (!window.fetch || !formularz.reportValidity()) return;
+    event.preventDefault();
+
+    const adres = formularz.getAttribute("action")
+      .replace("formsubmit.co/", "formsubmit.co/ajax/");
+    const dane = new FormData(formularz);
+    dane.delete("_next"); /* przy wysylce w tle nie ma dokad wracac */
+
+    formularz.querySelector("[data-blad-wysylki]")?.remove();
+    if (przycisk) przycisk.disabled = true;
+
+    try {
+      const odpowiedz = await fetch(adres, {
+        method: "POST",
+        body: dane,
+        headers: { Accept: "application/json" }
+      });
+      if (!odpowiedz.ok) throw new Error(odpowiedz.status);
+      pokazPodziekowanie();
+    } catch (_) {
+      if (przycisk) przycisk.disabled = false;
+      pokazBlad("Nie udało się wysłać wiadomości. Spróbuj ponownie lub napisz na tooniprojektuja@gmail.com.");
+    }
+  });
+});
 
 document.querySelector("[data-pdf-preview]")?.addEventListener("click", event => {
   const button = event.currentTarget;
