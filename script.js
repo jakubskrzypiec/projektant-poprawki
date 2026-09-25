@@ -1119,7 +1119,13 @@ if (packToggles.length && packPanels.length) {
     panel.style.height = `${startowa}px`;
     panel.getBoundingClientRect(); /* wymuszenie przeliczenia stylu */
 
-    const docelowa = otwarty ? inner.scrollHeight : 0;
+    /* Mierzymy caly panel, a nie samo scrollHeight jego tresci.
+       inner.scrollHeight pomija obramowanie i margin-bottom dymka, przez co
+       animacja konczyla sie ok. 28 px za wysoko. Przelaczenie na "auto" po
+       transitionend dodawalo te brakujace piksele naraz i dolna krawedz
+       wykonywala widoczny skok. panel.scrollHeight uwzglednia caly zajety
+       obszar, rowniez gdy panel jest aktualnie zwiniety do 0 px. */
+    const docelowa = otwarty ? panel.scrollHeight : 0;
     panel.style.height = `${docelowa}px`;
 
     const czas = getComputedStyle(panel).transitionDuration;
