@@ -743,8 +743,32 @@ faqItems.forEach(item => {
 
   summary.addEventListener("click", event => {
     event.preventDefault();
+    /* Celowo BEZ trzymajWMiejscu — usuniete 25.09, znalezione przez
+       dokladny pomiar na zywej stronie po zgloszeniu klienta.
+
+       trzymajWMiejscu SAM W SOBIE dziala poprawnie: mierzy pozycje
+       klikni etego elementu i koryguje scroll, zeby zostal w miejscu.
+       Problem jest w tym UKLADZIE — tutaj i w sekcji procesu WIDOCZNYCH
+       jest NA RAZ WIELE pytan/kafli (nie jeden przycisk sterujacy wszystkim
+       jak w pakietach). Kompensacja "podaza" za KLIKNIETYM elementem, ale
+       scroll to zmiana GLOBALNA — przesuwa WSZYSTKO na ekranie, WLACZNIE
+       Z INNYMI, NIEKLIKNIETYMI pytaniami/kaflami, ktore same w sobie NIE
+       zmienily pozycji w dokumencie. Przy klikaniu PO KOLEI (np. z gory
+       na dol) kazde kolejne domkniecie sasiada NAD kliknietym elementem
+       przesuwa kompensacje w TA SAMA strone, wiec sie KUMULUJE.
+
+       Zmierzone na zywej stronie (sekcja procesu, sekwencja klikniec
+       0,1,2,3,4,5 z gory na dol): scroll dryfowal do -1450 px, a klikniety
+       na koncu kafel byl calkowicie poza ekranem — dokladnie "scrolluje
+       strone do gory a nie pokazuje tego kafla" z uwagi klienta.
+
+       Bez kompensacji, klikniety element MOZE przesunac sie na ekranie
+       o wysokosc sasiada, ktory sie domyka (zwykle 100-350 px) — to jest
+       normalne, przewidywalne zachowanie kazdego akordeonu (Bootstrap,
+       Material UI, itd. dzialaja dokladnie tak). To duzo mniejszy
+       i bardziej przewidywalny ruch niz kilkuset-pikselowy dryf calej
+       strony. */
     const willOpen = getNextDetailsState(item);
-    trzymajWMiejscu(summary);
 
     if (willOpen) {
       faqItems.forEach(other => {
@@ -863,9 +887,8 @@ setProcessProgress(0);
 processItems.forEach((item, index) => {
   const button = item.querySelector("[data-process-toggle]");
   button?.addEventListener("click", () => {
-    /* Kafle procesu animuje CSS (grid-template-rows, 550 ms), a nie Web
-       Animations jak w FAQ. Domyslne 320 ms konczylo sie w polowie ruchu. */
-    trzymajWMiejscu(button, 600);
+    /* Celowo BEZ zadnej kompensacji scrolla — patrz komentarz przy FAQ
+       (funkcja trzymajWMiejscu, wyzej w tym pliku) po pelne wyjasnienie. */
     const willOpen = !item.classList.contains("is-open");
     processItems.forEach(other => {
       const open = willOpen && other === item;

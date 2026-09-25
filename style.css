@@ -5915,27 +5915,12 @@ svg {
   }
 }
 
-/* Podwojna kompensacja scrolla — znaleziona i naprawiona 25.09.
-
-   Ta regula kiedys wlaczala z powrotem natywne kotwiczenie przegladarki,
-   bo BEZ niego klikniety etap uciekal spod kursora nawet o 344 px, gdy nad
-   nim zwijal sie poprzedni. To bylo potrzebne, ZANIM w tym pliku pojawil
-   sie wlasny mechanizm trzymajWMiejscu (JS), ktory robi dokladnie to samo.
-
-   Od tamtej pory dzialaly WSPOLNIE dwa niezalezne mechanizmy naraz:
-   natywne kotwiczenie przegladarki (ten plik) i reczna kompensacja w JS.
-   Przy pojedynczym kliknieciu prawie sie nie byo widac, ale przy kilku
-   szybkich klikniecach pod rzad (user klika kolejny kafel, zanim poprzedni
-   skonczyl animacje) oba mechanizmy SUMOWALY swoje korekty. Zmierzone na
-   zywej stronie: seria 8 klikniec w rozne kafle co 180 ms dawala dryf
-   -1450 px (scroll ucieka w gore o poltora tysiaca pikseli — dokladnie
-   "jestem w stanie przescrollowac sie az do pakietow" z uwagi klienta).
-   Po wylaczeniu natywnego kotwiczenia, ta sama seria klikniec konczy sie
-   na dryfie 0 px.
-
-   Wlasny mechanizm (trzymajWMiejscu) sam w zupelnosci wystarcza — zostaje
-   jedno, przewidywalne zrodlo kompensacji zamiast dwoch bijacych sie. */
-.process {
+/* Kotwiczenie scrolla wylaczone globalnie — historia i pelne
+   wyjasnienie w drugiej notatce nizej (szukaj "KOTWICZENIE SCROLLA —
+   DRUGA RUNDA, 25.09"), bo pierwsza proba (wylaczenie tylko na .process)
+   NIE WYSTARCZYLA: przegladarka potrafi wybrac kotwice gdziekolwiek
+   indziej na stronie, poza sekcja ktorej dotyczy zmiana. */
+html {
   overflow-anchor: none;
 }
 
@@ -9337,3 +9322,49 @@ html[data-scroll-natychmiast] body {
     height: 920px;
   }
 }
+
+/* =========================================================
+   KOTWICZENIE SCROLLA — DRUGA RUNDA, 25.09
+   =========================================================
+
+   Historia w skrocie:
+   1. Pierwotnie .process mialo overflow-anchor: auto (natywne
+      kotwiczenie), bo bez niego klikniety etap uciekal spod kursora
+      nawet o 344 px, gdy nad nim zwijal sie poprzedni.
+   2. Gdy w JS pojawil sie wlasny mechanizm trzymajWMiejscu (robiacy
+      to samo recznie), oba dzialaly NARAZ i SUMOWALY korekty. Pierwsza
+      naprawa: .process { overflow-anchor: none } — zmierzone wtedy:
+      seria 8 klikniec w rozne kafle co 180 ms, dryf spadl z -1450 px
+      do 0 px. Wygladalo na naprawione.
+   3. Klient zglosil ze DALEJ tak jest, tym razem precyzujac scenariusz:
+      klikanie PO KOLEI z gory na dol (nie losowo), az "scrolluje strone
+      do gory a nie pokazuje tego kafla". To ujawnilo DWA osobne bledy,
+      ktorych poprzedni pomiar (losowa kolejnosc) nie zlapal:
+
+      a) overflow-anchor: none na .process nie wystarczylo — natywne
+         kotwiczenie przegladarki (wciaz wlaczone na html/body) potrafilo
+         wybrac kotwice GDZIEKOLWIEK NA STRONIE, poza sama sekcja .process,
+         i mimo to reagowac na zmiany wysokosci wewnatrz niej. Zmierzone:
+         z overflow-anchor: none TYLKO na .process, scroll dalej dryfowal
+         przy sekwencyjnym klikaniu. Dopiero wylaczenie na <html> (powyzej
+         w tym pliku) dalo dryf 0 px w kazdym tescie.
+
+      b) Fundamentalna wada koncepcyjna trzymajWMiejscu w tym ukladzie:
+         funkcja "podaza" za KLIKNIETYM elementem, przesuwajac scroll tak,
+         zeby zostal w tym samym miejscu na ekranie. Ale scroll to zmiana
+         GLOBALNA — przesuwa WSZYSTKO, wlacznie z INNYMI, niekliknietymi
+         kaflami/pytaniami, ktore same w sobie nigdzie sie nie ruszyly.
+         Gdy wszystkie sa widoczne na raz (proces: 6 kafli, FAQ: 10 pytan
+         na ekranie), i user klika PO KOLEI, kazde domkniecie sasiada NAD
+         kliknietym elementem przesuwa kompensacje w TA SAMA strone —
+         kumuluje sie zamiast sie znosic (w przeciwienstwie do losowej
+         kolejnosci, gdzie czesciowo znosilo sie przez przypadek).
+
+   Rozwiazanie: trzymajWMiejscu usuniete z handlerow procesu i FAQ
+   (zostaje tylko tam, gdzie steruje JEDNYM przyciskiem widocznym na raz —
+   "Rozwin opisy pakietow"). Bez kompensacji scroll sie NIE rusza wcale;
+   klikniety element moze przesunac sie na ekranie o wysokosc sasiada,
+   ktory sie domyka (zwykle 100-350 px) — to normalne, przewidywalne
+   zachowanie kazdego akordeonu, i duzo mniejszy ruch niz kilkuset-
+   -pikselowy dryf calej strony.
+   ========================================================= */
