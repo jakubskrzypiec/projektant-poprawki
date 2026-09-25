@@ -5915,11 +5915,28 @@ svg {
   }
 }
 
-/* Kotwiczenie przewijania wlaczone z powrotem: bez niego klikniety etap
-   uciekal spod kursora nawet o 344 px, gdy nad nim zwijal sie poprzedni.
-   Kratka w tle i tak nie skacze, bo body ma background-attachment: fixed. */
+/* Podwojna kompensacja scrolla — znaleziona i naprawiona 25.09.
+
+   Ta regula kiedys wlaczala z powrotem natywne kotwiczenie przegladarki,
+   bo BEZ niego klikniety etap uciekal spod kursora nawet o 344 px, gdy nad
+   nim zwijal sie poprzedni. To bylo potrzebne, ZANIM w tym pliku pojawil
+   sie wlasny mechanizm trzymajWMiejscu (JS), ktory robi dokladnie to samo.
+
+   Od tamtej pory dzialaly WSPOLNIE dwa niezalezne mechanizmy naraz:
+   natywne kotwiczenie przegladarki (ten plik) i reczna kompensacja w JS.
+   Przy pojedynczym kliknieciu prawie sie nie byo widac, ale przy kilku
+   szybkich klikniecach pod rzad (user klika kolejny kafel, zanim poprzedni
+   skonczyl animacje) oba mechanizmy SUMOWALY swoje korekty. Zmierzone na
+   zywej stronie: seria 8 klikniec w rozne kafle co 180 ms dawala dryf
+   -1450 px (scroll ucieka w gore o poltora tysiaca pikseli — dokladnie
+   "jestem w stanie przescrollowac sie az do pakietow" z uwagi klienta).
+   Po wylaczeniu natywnego kotwiczenia, ta sama seria klikniec konczy sie
+   na dryfie 0 px.
+
+   Wlasny mechanizm (trzymajWMiejscu) sam w zupelnosci wystarcza — zostaje
+   jedno, przewidywalne zrodlo kompensacji zamiast dwoch bijacych sie. */
 .process {
-  overflow-anchor: auto;
+  overflow-anchor: none;
 }
 
 /* Dłuższe teksty: ładniejsze łamanie także zanim wykona się JS typography fix. */
