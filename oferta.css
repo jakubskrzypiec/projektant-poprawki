@@ -1120,11 +1120,28 @@
 }
 
 .offer-matrix__panel {
+  /* Wysokosc mierzy JS (inner.scrollHeight), a sama animacje robi
+     czysty CSS transition — nie JS. Sprobowany wczesniej trick
+     grid-template-rows: 0fr -> 1fr mial pulapke: przy minmax(0, Nfr)
+     w kontenerze o niezdefiniowanej wysokosci "fr" nie rozwija sie do
+     tresci, tylko zostaje na minimum (0). Bez minmax "auto" jako minimum
+     dawalo z kolei panel zawsze wysoki na jedna linie tekstu, nawet
+     zamkniety. Zmierzone empirycznie oba warianty. Zwykle height + CSS
+     transition tego problemu nie ma — dziala jak kazda inna harmonijka
+     w tym serwisie (FAQ, uslugi dodatkowe). */
   height: 0;
   overflow: hidden;
+  transition: height .42s cubic-bezier(.2,.75,.25,1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .offer-matrix__panel {
+    transition: none;
+  }
 }
 
 .offer-matrix__panel-inner {
+  overflow: hidden;
   padding: 28px 32px 30px;
   margin-bottom: 26px;
   border: 1px solid var(--line);
