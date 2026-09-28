@@ -9368,3 +9368,89 @@ html[data-scroll-natychmiast] body {
    zachowanie kazdego akordeonu, i duzo mniejszy ruch niz kilkuset-
    -pikselowy dryf calej strony.
    ========================================================= */
+
+/* =========================================================
+   OSTATNIE POPRAWKI KLIENTA — 28.09.2026
+   ========================================================= */
+
+/* Social media w naglowku podstron pozostaja granatowe rowniez przed
+   przewinieciem strony. Strona glowna zachowuje dotychczasowy kontrast
+   ikon na hero. */
+body:not(.home) .header .social--header,
+body:not(.home) .header:not(.is-scrolled) .social--header,
+body:not(.home) .header .social--header:hover,
+body:not(.home) .header .social--header:focus-visible {
+  border-color: var(--navy) !important;
+  color: var(--navy) !important;
+  background: transparent !important;
+}
+
+/* Obie kolumny "O nas" maja jednakowy odstep miedzy akapitami. Delikatnie
+   szersza prawa kolumna rownowazy liczbe wierszy, dzieki czemu tekst nadal
+   konczy sie na jednej wysokosci. */
+@media (min-width: 821px) {
+  .about__copy .rich-copy {
+    grid-template-columns: minmax(0, 46.5fr) minmax(0, 53.5fr) !important;
+  }
+
+  .about__copy .rich-copy > div {
+    min-width: 0;
+    justify-content: flex-start !important;
+    row-gap: 16px !important;
+  }
+}
+
+/* Pakiety sa stale rozwiniete. Naglowek karty nie jest juz kontrolka,
+   a cztery osobne CTA zastapil jeden link pod cala siatka. */
+.home .packages .package-card > summary {
+  cursor: default !important;
+}
+
+.packages__details-link {
+  text-decoration: none;
+}
+
+.packages__details-link > span:first-child {
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.packages__details-link .packages__toggle-icon {
+  background: var(--navy);
+  color: #fff;
+  transition: transform .25s ease, background .25s ease, color .25s ease;
+}
+
+.packages__details-link .packages__toggle-icon svg {
+  transform: none !important;
+  transition: transform .25s ease;
+}
+
+.packages__details-link:hover .packages__toggle-icon,
+.packages__details-link:focus-visible .packages__toggle-icon {
+  transform: translateX(4px) !important;
+}
+
+.packages__details-link:hover .packages__toggle-icon svg,
+.packages__details-link:focus-visible .packages__toggle-icon svg {
+  transform: translateX(2px) !important;
+}
+
+/* Klikniecie lewej lub prawej polowy zdjecia w otwartym modalu zmienia
+   fotografie. Widocznych strzalek na zdjeciu juz nie ma. */
+.modal__image {
+  cursor: pointer;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+/* Kolor zaznaczenia wskazany przez klienta. */
+::selection {
+  background: #F0E4C7;
+  color: #17284F;
+}
+
+::-moz-selection {
+  background: #F0E4C7;
+  color: #17284F;
+}

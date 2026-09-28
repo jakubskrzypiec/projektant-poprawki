@@ -275,9 +275,24 @@ modalImage?.addEventListener("click", event => {
   stepModalImage(event.clientX < bounds.left + bounds.width / 2 ? -1 : 1);
 });
 
+/* Ochrona dotyczy tylko galerii otwartej w modalu. Obrazu wyswietlanego
+   publicznie nie da sie technicznie ukryc przed narzedziami deweloperskimi,
+   ale blokujemy bezposrednie przeciaganie i menu "Zapisz obraz jako". */
+const modalGallery = modal?.querySelector(".modal__gallery");
+modalGallery?.addEventListener("dragstart", event => {
+  if (event.target.closest("img")) event.preventDefault();
+});
+modalGallery?.addEventListener("contextmenu", event => {
+  if (event.target.closest("img")) event.preventDefault();
+});
+
 const packagesToggle = document.querySelector("[data-packages-toggle]");
 const packageCards = [...document.querySelectorAll(".packages__grid .package-card")];
 const packagesGrid = document.querySelector(".packages__grid");
+packageCards.forEach(card => {
+  card.open = true;
+  card.querySelector("summary")?.addEventListener("click", event => event.preventDefault());
+});
 packagesToggle?.addEventListener("click", () => {
   if (packagesToggle.disabled) return;
   const open = packagesToggle.getAttribute("aria-expanded") !== "true";
@@ -450,6 +465,7 @@ const openModal = card => {
 
     image.src = source;
     image.alt = modalGalleryAlts.get(source) || `${projectTitle} - zdjęcie ${index + 1}`;
+    image.draggable = false;
     image.loading = "lazy";
     image.decoding = "async";
     tile.append(image);

@@ -1683,3 +1683,40 @@
     transition: none;
   }
 }
+
+/* Ostatnie poprawki klienta: kazdy przycisk jest w tym samym wierszu co
+   odpowiadajacy mu akapit. */
+.offer-matrix__action-row {
+  margin-top: clamp(26px, 3vw, 42px);
+  display: grid;
+  grid-template-columns: minmax(0, 720px) minmax(260px, 1fr);
+  align-items: center;
+  gap: 28px 48px;
+}
+
+.offer-matrix__action-row:first-of-type {
+  margin-top: clamp(40px, 4vw, 64px);
+}
+
+.offer-matrix__action-row .offer-matrix__note,
+.offer-matrix__action-row .offer-matrix__pdf-wrap {
+  margin: 0;
+}
+
+.offer-matrix__action-row > .drop-button,
+.offer-matrix__action-row > .offer-matrix__pdf-wrap {
+  justify-self: end;
+}
+
+@media (max-width: 720px) {
+  .offer-matrix__action-row {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+    gap: 20px;
+  }
+
+  .offer-matrix__action-row > .drop-button,
+  .offer-matrix__action-row > .offer-matrix__pdf-wrap {
+    justify-self: stretch;
+  }
+}
