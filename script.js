@@ -144,7 +144,7 @@ navLinks.forEach(link => {
 
 /* Hero rotating gold word */
 const rotatingWord = document.querySelector("[data-rotating-word]");
-const rotatingWords = ["działają.", "uspokajają.", "zostają.", "pasują."];
+const rotatingWords = ["inspirują", "angażują", "zostają", "intrygują"];
 let rotatingIndex = 0;
 if (rotatingWord && !reduceMotion) {
   window.setInterval(() => {
@@ -365,35 +365,6 @@ packagesToggle?.addEventListener("click", () => {
   packagesToggle.querySelector("[data-packages-toggle-label]").textContent = open ? "Zwiń opisy pakietów" : "Rozwiń opisy pakietów";
 });
 
-/* Kalendarz jest aktywowany dopiero po ustawieniu rzeczywistego adresu wydarzenia. */
-const consultationCalendar = document.querySelector("[data-calendly-url]");
-if (consultationCalendar) {
-  const url = consultationCalendar.dataset.calendlyUrl.trim();
-  const widget = consultationCalendar.querySelector("[data-calendly-widget]");
-  const pending = consultationCalendar.querySelector("[data-calendly-pending]");
-  let valid = false;
-  try { valid = new URL(url).hostname === "calendly.com"; } catch (_) { /* Brak linku wydarzenia. */ }
-  if (valid && widget) {
-    /* Kontener celowo NIE ma klasy "calendly-inline-widget".
-
-       Skrypt Calendly po zaladowaniu sam skanuje strone w poszukiwaniu
-       elementow z ta klasa i czyta z nich atrybut data-url. My podajemy
-       adres programowo przez initInlineWidget, wiec atrybutu tam nie ma
-       i ich kod wywracal sie na "Cannot read properties of null (reading
-       'split')". Blad byl widoczny w konsoli na podstronie Kontakt. */
-    const script = document.createElement("script");
-    script.src = "https://assets.calendly.com/assets/external/widget.js";
-    script.async = true;
-    script.onload = () => {
-      if (!window.Calendly?.initInlineWidget) return;
-      widget.hidden = false;
-      window.Calendly.initInlineWidget({ url, parentElement: widget });
-      if (pending) pending.hidden = true;
-    };
-    document.head.append(script);
-  }
-}
-
 /* Galeria na pełnym ekranie ma całkowicie zatrzymać stronę pod spodem.
    Samo overflow:hidden nie wystarcza na iOS, dlatego zapamiętujemy pozycję
    i przywracamy ją po zamknięciu. */
@@ -450,7 +421,11 @@ const openModal = card => {
   const firstImage = card.dataset.image || gallery[0] || "";
   modalImage.style.objectPosition = card.dataset.focus || "50% 50%";
   modalTitle.textContent = projectTitle;
-  if (modalDescription) modalDescription.textContent = card.dataset.description || "";
+  if (modalDescription) {
+    modalDescription.textContent = card.dataset.description || "";
+    protectPolishTypography(modalDescription);
+    window.dzielenieWyrazowPL?.([".modal__description"]);
+  }
   modalThumbs.replaceChildren();
 
   gallery.forEach((source, index) => {
@@ -517,6 +492,8 @@ let sliderAnimating = false;
 let sliderRaf = 0;
 let sliderLast = 0;
 let sliderDesktop = false;
+let sliderFinishTimer = 0;
+let sliderMotionId = 0;
 const sliderSpeed = 14; // px / second — deliberately calm, but clearly moving
 
 const originals = () => [...(track?.querySelectorAll("[data-project-card]:not([data-clone])") || [])];
@@ -526,6 +503,18 @@ const setTrackPosition = (value, animate = false) => {
   if (!track) return;
   track.style.transition = animate ? "transform .72s cubic-bezier(.2,.72,.2,1)" : "none";
   track.style.transform = `translate3d(${-value}px,0,0)`;
+};
+
+const readRenderedSliderOffset = () => {
+  if (!track) return sliderOffset;
+  const transform = getComputedStyle(track).transform;
+  if (!transform || transform === "none") return sliderOffset;
+  try {
+    return Math.max(0, -(new DOMMatrixReadOnly(transform).m41));
+  } catch (_) {
+    const values = transform.match(/-?\d*\.?\d+/g)?.map(Number) || [];
+    return Math.max(0, -(values.length === 6 ? values[4] : values[12] || 0));
+  }
 };
 
 const measureSlider = () => {
@@ -566,6 +555,8 @@ const setupSlider = () => {
   const shouldDesktop = window.innerWidth > 820;
 
   cancelAnimationFrame(sliderRaf);
+  window.clearTimeout(sliderFinishTimer);
+  sliderMotionId += 1;
   clearClones();
   track.style.transition = "none";
   track.style.transform = "none";
@@ -603,6 +594,21 @@ const nudgeSlider = direction => {
   const gap = parseFloat(getComputedStyle(track).gap) || 0;
   const distance = (first.offsetWidth + gap) * 2; // faster jump: exactly 2 cards
 
+  /* Każde kliknięcie przejmuje aktualną, widoczną pozycję karuzeli.
+     Poprzednio kilka timeoutów kończyło animacje w innej kolejności:
+     stary timeout cofał nowszy ruch albo zostawiał autoplay zatrzymany. */
+  if (sliderAnimating) {
+    sliderOffset = readRenderedSliderOffset();
+    track.style.transition = "none";
+    setTrackPosition(sliderOffset);
+    void track.offsetWidth;
+  }
+  window.clearTimeout(sliderFinishTimer);
+  const motionId = ++sliderMotionId;
+
+  normalizeSlider();
+  setTrackPosition(sliderOffset);
+
   if (direction < 0 && sliderOffset < distance) {
     sliderOffset += sliderSetWidth;
     setTrackPosition(sliderOffset);
@@ -612,7 +618,8 @@ const nudgeSlider = direction => {
   sliderOffset += direction * distance;
   setTrackPosition(sliderOffset, true);
 
-  window.setTimeout(() => {
+  sliderFinishTimer = window.setTimeout(() => {
+    if (motionId !== sliderMotionId) return;
     normalizeSlider();
     setTrackPosition(sliderOffset);
     sliderAnimating = false;
@@ -824,6 +831,7 @@ const typographySelectors = [
   ".package-card summary p",
   ".package-card__body p",
   ".package-card__body li",
+  ".modal__description",
   ".process-item small",
   ".process-answer p",
   ".process-answer b",
