@@ -608,10 +608,17 @@ const nudgeSlider = direction => {
 
   normalizeSlider();
   setTrackPosition(sliderOffset);
+  /* Zmiana z kopii zestawu na odpowiadającą jej pozycję w zestawie
+     bazowym musi zostać narysowana przed rozpoczęciem kolejnego ruchu.
+     Bez tego przeglądarka scalała oba zapisy transformacji i przy szybkim
+     klikaniu animowała długą drogę wstecz — wyglądało to jak powrót
+     karuzeli do początku. */
+  void track.offsetWidth;
 
   if (direction < 0 && sliderOffset < distance) {
     sliderOffset += sliderSetWidth;
     setTrackPosition(sliderOffset);
+    void track.offsetWidth;
   }
 
   sliderAnimating = true;
