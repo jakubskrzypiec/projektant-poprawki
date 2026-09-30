@@ -904,17 +904,38 @@ const setProcessProgress = step => {
 
 setProcessProgress(0);
 
+let processScrollRevision = 0;
+if (processItems.length) {
+  ["wheel", "touchstart", "keydown"].forEach(eventName => {
+    window.addEventListener(eventName, () => { processScrollRevision += 1; }, { passive: true });
+  });
+}
+
 processItems.forEach((item, index) => {
   const button = item.querySelector("[data-process-toggle]");
   button?.addEventListener("click", () => {
-    /* Celowo BEZ zadnej kompensacji scrolla — patrz komentarz przy FAQ
-       (funkcja trzymajWMiejscu, wyzej w tym pliku) po pelne wyjasnienie. */
+    const scrollRevision = ++processScrollRevision;
     const willOpen = !item.classList.contains("is-open");
     processItems.forEach(other => {
       const open = willOpen && other === item;
       other.classList.toggle("is-open", open);
       other.querySelector("[data-process-toggle]")?.setAttribute("aria-expanded", String(open));
     });
+
+    if (willOpen) {
+      /* Najpierw kończymy zmianę wysokości obu paneli, potem wyznaczamy
+         pozycję nagłówka. Nowe kliknięcie lub ręczne przewijanie anuluje
+         poprzedni cel, aby animacje nie przeciągały strony w różne miejsca. */
+      window.requestAnimationFrame(() => {
+        const animations = processItems.flatMap(other =>
+          other.querySelector(".process-answer")?.getAnimations() || []
+        );
+        Promise.allSettled(animations.map(animation => animation.finished)).then(() => {
+          if (scrollRevision !== processScrollRevision || !item.classList.contains("is-open")) return;
+          przewinDoElementu(button, { plynnie: true });
+        });
+      });
+    }
 
     setProcessProgress(index + 1);
 
