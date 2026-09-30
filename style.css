@@ -9427,3 +9427,15 @@ body *:not(.about__copy .rich-copy, .about__copy .rich-copy *) {
   overflow-wrap: normal !important;
   word-break: normal !important;
 }
+
+/* Strona główna: odstępy wynikają z treści, nie z wysokości monitora.
+   Hero oraz zatwierdzone O nas, FAQ i kontakt zachowują swój układ. */
+@media (min-width: 1181px) {
+  .home .projects.section,
+  .home .packages.section,
+  .home .process.section {
+    min-height: 0;
+    display: block;
+    padding-block: clamp(84px, 8vw, 132px);
+  }
+}
