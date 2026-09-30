@@ -8375,11 +8375,13 @@ svg {
 
 .offer-consult__intro {
   max-width: 600px;
-  padding-top: 31px;
+  padding-top: 36px;
 }
 
 .offer-consult__intro p {
-  margin: 0 0 28px;
+  margin: 0 0 14px;
+  text-align: justify;
+  text-align-last: left;
   color: rgba(23, 40, 79, .72);
   font-size: 17px;
   line-height: 1.72;
@@ -8393,6 +8395,16 @@ svg {
 .offer-consult__intro .line-link svg {
   width: 18px;
   height: 18px;
+}
+
+@media (max-width: 900px) {
+  .offer-consult__head {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .offer-consult__intro {
+    padding-top: 0;
+  }
 }
 
 .offer-consult__journey {
@@ -9406,4 +9418,12 @@ body:not(.home) .header .social--header:focus-visible {
 .slider-arrow:focus-visible::before {
   border-color: rgba(37, 61, 107, .46) !important;
   background: var(--navy) !important;
+}
+
+/* Bez dzielenia wyrazów poza tekstem sekcji O nas. */
+body *:not(.about__copy .rich-copy, .about__copy .rich-copy *) {
+  hyphens: none !important;
+  -webkit-hyphens: none !important;
+  overflow-wrap: normal !important;
+  word-break: normal !important;
 }

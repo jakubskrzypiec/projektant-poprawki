@@ -302,13 +302,11 @@ const createProjectCard = (project, index) => {
   image.loading = index === 0 ? "eager" : "lazy";
   image.decoding = "async";
 
-  /* Uwaga klienta nr 8 (22.09): "strzalki mialy byc wszedzie takie same".
-     Kafel mial tu znak tekstowy →, reszta strony uzywa ikony #icon-arrow. */
+  /* Podpis galerii bez dodatkowej strzałki. */
   const hint = document.createElement("span");
   hint.className = "projects-page-card__hint";
   hint.setAttribute("aria-hidden", "true");
   hint.append("Zobacz galerię");
-  hint.insertAdjacentHTML("beforeend", '<svg aria-hidden="true"><use href="#icon-arrow"></use></svg>');
 
   media.append(image, hint);
   button.append(head, media);
@@ -337,7 +335,6 @@ if (projectsGrid) {
     moreButton.className = "projects-page-more drop-button";
     moreButton.type = "button";
     moreButton.append("Pokaż więcej projektów");
-    moreButton.insertAdjacentHTML("beforeend", '<svg aria-hidden="true"><use href="#icon-arrow"></use></svg>');
     moreButton.setAttribute("aria-controls", "projects-list");
 
     projectsGrid.id = "projects-list";

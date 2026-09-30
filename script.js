@@ -252,7 +252,7 @@ let modalImages = [];
 let lastFocus = null;
 let modalGalleryAlts = new Map();
 
-const selectModalImage = source => {
+const selectModalImage = (source, animate = true) => {
   if (!modalImage || !modalThumbs) return;
   modalImage.src = source;
   modalImage.alt = modalGalleryAlts.get(source) || modalTitle?.textContent || "Zdjęcie realizacji";
@@ -260,6 +260,14 @@ const selectModalImage = source => {
     const active = button.dataset.source === source;
     button.classList.toggle("is-active", active);
     button.setAttribute("aria-pressed", String(active));
+    if (active) {
+      const stripBounds = modalThumbs.getBoundingClientRect();
+      const thumbBounds = button.getBoundingClientRect();
+      let offset = 0;
+      if (thumbBounds.left < stripBounds.left) offset = thumbBounds.left - stripBounds.left;
+      else if (thumbBounds.right > stripBounds.right) offset = thumbBounds.right - stripBounds.right;
+      if (offset) modalThumbs.scrollBy({ left: offset, behavior: animate && !reduceMotion ? "smooth" : "instant" });
+    }
   });
 };
 
@@ -424,7 +432,6 @@ const openModal = card => {
   if (modalDescription) {
     modalDescription.textContent = card.dataset.description || "";
     protectPolishTypography(modalDescription);
-    window.dzielenieWyrazowPL?.([".modal__description"]);
   }
   modalThumbs.replaceChildren();
 
@@ -447,9 +454,9 @@ const openModal = card => {
     modalThumbs.append(tile);
   });
 
-  selectModalImage(firstImage);
   modal.classList.add("is-open");
   modal.setAttribute("aria-hidden", "false");
+  selectModalImage(firstImage, false);
   lockPageScroll();
   modal.querySelector(".modal__close")?.focus({ preventScroll: true });
 };
@@ -881,26 +888,8 @@ const protectPolishTypography = node => {
 
 document.querySelectorAll(typographySelectors.join(",")).forEach(protectPolishTypography);
 
-/* Miekkie laczniki w tekscie justowanym.
-
-   Przegladarka nie ma polskiego slownika dzielenia (sprawdzone: hyphens:
-   auto nie zmienia lamania ani o piksel), wiec justowanie w waskich
-   kolumnach robilo "rzeki" — biale przerwy miedzy slowami. dzielenie-pl.js
-   dokleja niewidoczne laczniki na podstawie wzorcow TeX-owych i sam
-   sprawdza, ktore akapity sa naprawde justowane. Musi isc po powyzszej
-   typografii, zeby nie rozbijac wstawionych twardych spacji. */
-window.dzielenieWyrazowPL?.([
-  ".about__copy .rich-copy p",
-  ".offer-matrix__note",
-  ".offer-matrix__help p",
-  ".offer-matrix__pdf-note",
-  ".offer-matrix__panel-inner p",
-  ".offer-consult__intro p",
-  ".offer-consult__journey-row p",
-  ".package-card__body p",
-  ".faq__list details > div p",
-  ".contact__lead"
-].join(","));
+/* Dzielenie wyrazów pozostaje wyłącznie w sekcji O nas. */
+window.dzielenieWyrazowPL?.(".about__copy .rich-copy p");
 
 /* Process accordion + progress */
 const processItems = [...document.querySelectorAll("[data-process-item]")];
@@ -986,6 +975,17 @@ if (embeddedMap && embeddedMapFrame) {
 }
 
 /* Success message */
+document.querySelectorAll('.contact-form input[type="datetime-local"]').forEach(input => {
+  const now = new Date();
+  const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+  if (!input.value) input.value = localDate.toISOString().slice(0, 16);
+  input.addEventListener("click", () => {
+    if (typeof input.showPicker === "function") {
+      try { input.showPicker(); } catch { /* Przeglądarka zachowuje natywną obsługę pola. */ }
+    }
+  });
+});
+
 document.querySelectorAll(".contact-form input[name='_next']").forEach(input => {
   const section = document.querySelector("#formularz") ? "formularz" : "kontakt";
   input.value = `${location.origin}${location.pathname}?wyslano=1#${section}`;
